@@ -1,7 +1,0 @@
-/home/lhstar/SKKU/openSWContest/ejs-t/build/CMakeFiles/rebuild_cache.dir
-/home/lhstar/SKKU/openSWContest/ejs-t/build/CMakeFiles/edit_cache.dir
-/home/lhstar/SKKU/openSWContest/ejs-t/build/CMakeFiles/ejs-t.dir
-/home/lhstar/SKKU/openSWContest/ejs-t/build/lib/CMakeFiles/rebuild_cache.dir
-/home/lhstar/SKKU/openSWContest/ejs-t/build/lib/CMakeFiles/edit_cache.dir
-/home/lhstar/SKKU/openSWContest/ejs-t/build/lib/CMakeFiles/sha256.dir
-/home/lhstar/SKKU/openSWContest/ejs-t/build/lib/CMakeFiles/parse.dir

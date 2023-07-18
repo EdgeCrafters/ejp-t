@@ -1,1 +1,0 @@
-/usr/bin/cc    CMakeFiles/ejs-t.dir/main.c.o  -o ejs-t  lib/libparse.a lib/libsha256.a 

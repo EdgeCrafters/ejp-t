@@ -1,19 +1,4 @@
-#include <stddef.h>
-#include <stdio.h>
-#include <unistd.h>
-#include <fcntl.h>
-#include <string.h>
-#include <stdlib.h>
-
-const int bufSize = 512;
-char basicEntry[] = "#include <stdio.h>\n#include \"common.h\"\nint main(int argc, char*argv[])\n{\n";
-char basicClosing[] = "\nprintf(\"%d\",diff(input,output));\nreturn 0;\n}";
-
-char inputEntry[] = "char input[] = \"";
-char inputClosing[] = "\";";
-
-char outputEntry[] = "char output[] = \"";
-char outputClosing[] = "\";";
+#include "parse.h"
 
 int entry(int fd)
 {
@@ -57,36 +42,41 @@ int putContents(int sourceFd, char prefix[], size_t prefixSize, char postfix[], 
 	return inputNum;
 }
 
-int main(int argc, char*argv[]){
+int gen(int argc, char*argv[]){
 
 	char resultFilePath[bufSize], inputFilePath[bufSize], outputFilePath[bufSize];
-	int c, flagI = 0, flagO = 0;
-	while((c = getopt(argc,argv, "i:o:"))!=-1){
-		switch(c){
-			case 'i':
-				flagI = 1;
-				strcpy(inputFilePath,optarg);
-				break;
-			case 'o':
-				flagO = 1;
-				strcpy(outputFilePath,optarg);
-				break;
-			case '?':
-				if(optopt == 'd' || optopt == 'i' || optopt == 'o')
-					fprintf(stdout, "Missing FileName\n");
-				else 
-					fprintf(stdout,"Unkown Option: %c \n", optopt);
-				exit(-1);
-				break;
-		}
-	}
+//	int c, flagI = 0, flagO = 0;
+//	while((c = getopt(argc,argv, "i:o:"))!=-1){
+//		switch(c){
+//			case 'i':
+//				flagI = 1;
+//				strcpy(inputFilePath,optarg);
+//				break;
+//			case 'o':
+//				flagO = 1;
+//				strcpy(outputFilePath,optarg);
+//				break;
+//			case '?':
+//				if(optopt == 'd' || optopt == 'i' || optopt == 'o')
+//					fprintf(stdout, "Missing FileName\n");
+//				else 
+//					fprintf(stdout,"Unkown Option: %c \n", optopt);
+//				exit(-1);
+//				break;
+//		}
+//	}
+//
+//	if(!(flagI&&flagO)){
+//		fprintf(stdout, "Missing Opts");	
+//		exit(-1);
+//	}
 
-	if(!(flagI&&flagO)){
-		fprintf(stdout, "Missing Opts");	
-		exit(-1);
-	}
+	if(argc < 3)
+		return -1;
 
-	strcpy(resultFilePath,".ejs/result.c");
+	strcpy(resultFilePath,argv[0]);
+	strcpy(inputFilePath,argv[1]);
+	strcpy(outputFilePath,argv[2]);
 
 	int totalWrite = 0;
 	int sourceFd = open(resultFilePath,O_WRONLY|O_CREAT|O_TRUNC); // config

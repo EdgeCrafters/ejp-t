@@ -1,0 +1,26 @@
+#IncludeRegexLine: ^[ 	]*[#%][ 	]*(include|import)[ 	]*[<"]([^">]+)([">])
+
+#IncludeRegexScan: ^.*$
+
+#IncludeRegexComplain: ^$
+
+#IncludeRegexTransform: 
+
+../includes/parse.h
+stddef.h
+-
+stdio.h
+-
+unistd.h
+-
+fcntl.h
+-
+string.h
+-
+stdlib.h
+-
+
+/home/lhstar/SKKU/openSWContest/ejs-t/lib/parse.c
+parse.h
+/home/lhstar/SKKU/openSWContest/ejs-t/lib/parse.h
+

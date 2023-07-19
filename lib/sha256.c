@@ -1,4 +1,3 @@
-#include "common.h"
 #include "sha256.h"
 
 #define uchar unsigned char

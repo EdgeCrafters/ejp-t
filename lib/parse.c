@@ -1,5 +1,5 @@
-#include "common.h"
 #include "parse.h"
+#include "sha256.h"
 
 int entry(int fd)
 {
@@ -12,9 +12,10 @@ int closing(int fd)
 	return write(fd,basicClosing, sizeof(basicClosing)-1);
 }
 
-int putContents(int sourceFd, char prefix[], size_t prefixSize, char postfix[], size_t postfixSize, char *inputPath)
+int putContents(int sourceFd, char prefix[], size_t prefixSize, char postfix[], size_t postfixSize, char *inputPath, int bias)
 {
 	char buf[bufSize];
+	char shaBuf[bufSize];
 	int readNum, inputFd, inputNum, stored, stride;
 
 	if((inputFd =	open(inputPath, O_RDONLY)) < 0)
@@ -23,7 +24,11 @@ int putContents(int sourceFd, char prefix[], size_t prefixSize, char postfix[], 
 	stored = 0;
 	stride = 1;
 	inputNum = write(sourceFd,prefix,prefixSize-1);
-	while((readNum = read(inputFd,buf+stored,stride)) > 0){
+	while(bias >=0 && (readNum = read(inputFd,buf+stored,stride)) > 0){
+		for(int i = 0;buf[stored+i]>32 && bias >=0 && i<readNum; ++i){
+			buf[stored+i] += bias;
+		}
+
 		if(buf[stored+readNum-1] == '\n'){
 			buf[stored+readNum-1] = '\0';
 			strcat(buf,"\\n");
@@ -38,6 +43,19 @@ int putContents(int sourceFd, char prefix[], size_t prefixSize, char postfix[], 
 		}
 	}
 	inputNum += write(sourceFd, buf, stored);
+
+	memset(buf,0,bufSize);
+	while(bias<0 && (readNum = read(inputFd, buf, bufSize-1))){
+		strcat(shaBuf,SHA256(buf));
+		strcpy(buf, SHA256(shaBuf));
+		strncpy(shaBuf, buf, 64);
+		shaBuf[64] = '\0';
+		memset(buf,0,bufSize);
+	}
+
+	if(bias < 0)
+		inputNum += write(sourceFd, shaBuf, 64);
+	
 	inputNum += write(sourceFd, postfix, postfixSize-1);
 
 	return inputNum;
@@ -46,45 +64,23 @@ int putContents(int sourceFd, char prefix[], size_t prefixSize, char postfix[], 
 int gen(int argc, char*argv[]){
 
 	char resultFilePath[bufSize], inputFilePath[bufSize], outputFilePath[bufSize];
-//	int c, flagI = 0, flagO = 0;
-//	while((c = getopt(argc,argv, "i:o:"))!=-1){
-//		switch(c){
-//			case 'i':
-//				flagI = 1;
-//				strcpy(inputFilePath,optarg);
-//				break;
-//			case 'o':
-//				flagO = 1;
-//				strcpy(outputFilePath,optarg);
-//				break;
-//			case '?':
-//				if(optopt == 'd' || optopt == 'i' || optopt == 'o')
-//					fprintf(stdout, "Missing FileName\n");
-//				else 
-//					fprintf(stdout,"Unkown Option: %c \n", optopt);
-//				exit(-1);
-//				break;
-//		}
-//	}
-//
-//	if(!(flagI&&flagO)){
-//		fprintf(stdout, "Missing Opts");	
-//		exit(-1);
-//	}
 
-	if(argc < 3)
+	if(argc < 4)
 		return -1;
 
 	strcpy(resultFilePath,argv[0]);
 	strcpy(inputFilePath,argv[1]);
 	strcpy(outputFilePath,argv[2]);
-
+	
+	int bias = atoi(argv[3]);
 	int totalWrite = 0;
-	int sourceFd = open(resultFilePath,O_WRONLY|O_CREAT|O_TRUNC); // config
+	int sourceFd = open("result.c",O_WRONLY|O_CREAT|O_TRUNC,S_IRWXO|S_IRWXU); // config
+
+	printf("args => %s %s %s %d\nsourceFd => %d\n",resultFilePath, inputFilePath, outputFilePath, bias, sourceFd);
 
 	totalWrite += entry(sourceFd);
-	totalWrite += putContents(sourceFd, inputEntry, sizeof(inputEntry), inputClosing, sizeof(inputClosing), inputFilePath);
-	totalWrite += putContents(sourceFd, outputEntry, sizeof(outputEntry), outputClosing, sizeof(outputClosing), outputFilePath);
+	totalWrite += putContents(sourceFd, inputEntry, sizeof(inputEntry), inputClosing, sizeof(inputClosing), inputFilePath, bias);
+	totalWrite += putContents(sourceFd, outputEntry, sizeof(outputEntry), outputClosing, sizeof(outputClosing), outputFilePath, -1);
 	totalWrite += closing(sourceFd);
 
 	close(sourceFd);

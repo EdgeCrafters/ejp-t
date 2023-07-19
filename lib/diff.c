@@ -1,5 +1,5 @@
-#include <string.h>
 #include "common.h"
+#include "diff.h"
 
 int diff(char* input, char*output)
 {

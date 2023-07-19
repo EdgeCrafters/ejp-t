@@ -11,4 +11,4 @@ add_subdirectory(lib)
 
 add_executable(ejs-t main.c)
 
-target_link_libraries( ejs-t parse sha256)
+target_link_libraries( ejs-t parse sha256 diff)

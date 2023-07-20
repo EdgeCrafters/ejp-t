@@ -26,9 +26,7 @@ int main(int argc, char*argv[])
 //		curl_easy_cleanup(curl);
 //	}
 
-	logout(NULL,NULL,NULL);
-	login(argv[1],NULL,NULL);
-	logout(NULL,NULL,NULL);
+	login(argv[1],argv[2],argv[3]);
 
 	return 0;
 }

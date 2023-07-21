@@ -1,3 +1,7 @@
+project(
+	EJS-T_UTIL
+	)
+
 add_library(parse STATIC parse.c)
 add_library(sha256 STATIC sha256.c)
 add_library(diff STATIC diff.c)

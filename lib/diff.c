@@ -1,7 +1,7 @@
 #include "diff.h"
-#include <git2.h>
 
-int diff(char* input, char*output)
+int diff(char* input, char*output, int bias)
 {
+
 	return strcmp(input, output);
 }

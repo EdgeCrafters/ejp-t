@@ -74,7 +74,7 @@ int gen(int argc, char*argv[]){
 	
 	int bias = atoi(argv[3]);
 	int totalWrite = 0;
-	int sourceFd = open("result.c",O_WRONLY|O_CREAT|O_TRUNC,S_IRWXO|S_IRWXU); // config
+	int sourceFd = open(resultFilePath, O_WRONLY|O_CREAT|O_TRUNC,S_IRWXO|S_IRWXU); // config
 
 	printf("args => %s %s %s %d\nsourceFd => %d\n",resultFilePath, inputFilePath, outputFilePath, bias, sourceFd);
 
@@ -84,6 +84,9 @@ int gen(int argc, char*argv[]){
 	totalWrite += closing(sourceFd);
 
 	close(sourceFd);
+
+	char compileCmd[bufSize];
+	sprintf(compileCmd,"gcc -o result %s",resultFilePath);
 
 	return 0;
 }

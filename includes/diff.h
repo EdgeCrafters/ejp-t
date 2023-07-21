@@ -1,3 +1,3 @@
 #pragma once
 #include "common.h"
-int diff(char*, char*);
+int diff(char*, char*, int);

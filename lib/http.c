@@ -2,6 +2,8 @@
 
 struct cookie session = {.isStore = 0};
 
+static size_t dummy(void *data, size_t size, size_t nmemb, void *clientp){ return size*nmemb;}
+
 size_t storeCookie(char *buffer, size_t size, size_t nitems, void *userdata)
 {
 	if(!strncmp(buffer,"Set-Cookie",10)){
@@ -21,6 +23,7 @@ int login(char home[], char id[], char pw[])
 	CURL *curl;
 	CURLcode res;
 	struct curl_slist *list = NULL;
+	long stat;
 
 	memset(url,0,URLSIZE);
 	sprintf(url,"%s/auth/login",home);
@@ -40,18 +43,32 @@ int login(char home[], char id[], char pw[])
 		sprintf(payload,"{\"studentId\": \"%s\",\"password\":\"%s\"}",id,pw);
 		curl_easy_setopt(curl, CURLOPT_POSTFIELDS,payload);
 		
-		curl_easy_setopt(curl, CURLOPT_COOKIEFILE,"./tmp/cookie.txt");
-		curl_easy_setopt(curl, CURLOPT_COOKIEJAR,"./tmp/cookie.txt");
-
+//		curl_easy_setopt(curl, CURLOPT_COOKIEFILE,"./tmp/cookie.txt");
+//		curl_easy_setopt(curl, CURLOPT_COOKIEJAR,"./tmp/cookie.txt");
+		
 		curl_easy_setopt(curl, CURLOPT_HEADERFUNCTION, storeCookie);
+		curl_easy_setopt(curl, CURLOPT_WRITEFUNCTION, dummy);
 
-		curl_easy_perform(curl);
+		res = curl_easy_perform(curl);
+
+		if(res != CURLE_OK)
+			return -1;
+
+		curl_easy_getinfo(curl, CURLINFO_HTTP_CODE, &stat);
+		if(stat != 201)
+			return -1;
 
 		curl_easy_cleanup(curl);
 
 	}else{
-		perror("Error on curl...\n");
+		fprintf(stderr,"Error on curl...\n");
+		return -1;
 	}
+	return 0;
+}
+
+int initRepo(char home[])
+{
 	return 0;
 }
 
@@ -93,7 +110,3 @@ int logout(char home[])
 	return 0;
 }
 
-int initRepo(char home[])
-{
-	return 0;
-}

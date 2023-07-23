@@ -7,26 +7,19 @@ project(
 include(FetchContent)
 
 FetchContent_Declare(
-	Libgit2	
+	git2	
 	GIT_REPOSITORY "https://github.com/libgit2/libgit2.git"
 	GIT_TAG "v1.6.4"
 	)
 
 FetchContent_Declare(
-	Libcurl
+	curl
 	GIT_REPOSITORY "https://github.com/curl/curl.git"
 	GIT_TAG "curl-8_1_2"
 	)
 
-FetchContent_Declare(
-	LibcJSON
-	GIT_REPOSITORY "https://github.com/DaveGamble/cJSON.git"
-	GIT_TAG "v1.7.16"
-	)
-
-FetchContent_MakeAvailable(Libgit2)
-FetchContent_MakeAvailable(Libcurl)
-FetchContent_MakeAvailable(LibcJSON)
+FetchContent_MakeAvailable(git2)
+FetchContent_MakeAvailable(curl)
 
 add_subdirectory(lib)
 add_subdirectory(src)

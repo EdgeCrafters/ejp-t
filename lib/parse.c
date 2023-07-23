@@ -1,5 +1,6 @@
 #include "parse.h"
 #include "sha256.h"
+#include "cJSON.h"
 
 int entry(int fd)
 {
@@ -12,7 +13,8 @@ int closing(int fd)
 	return write(fd,basicClosing, sizeof(basicClosing)-1);
 }
 
-int putContents(int sourceFd, char prefix[], size_t prefixSize, char postfix[], size_t postfixSize, char *inputPath, int bias)
+int putContents(int sourceFd, char prefix[], size_t prefixSize,\
+		char postfix[], size_t postfixSize, char *inputPath, int bias)
 {
 	char buf[bufSize];
 	char shaBuf[bufSize];
@@ -79,14 +81,18 @@ int gen(int argc, char*argv[]){
 	printf("args => %s %s %s %d\nsourceFd => %d\n",resultFilePath, inputFilePath, outputFilePath, bias, sourceFd);
 
 	totalWrite += entry(sourceFd);
-	totalWrite += putContents(sourceFd, inputEntry, sizeof(inputEntry), inputClosing, sizeof(inputClosing), inputFilePath, bias);
-	totalWrite += putContents(sourceFd, outputEntry, sizeof(outputEntry), outputClosing, sizeof(outputClosing), outputFilePath, -1);
+	totalWrite += putContents(sourceFd, inputEntry, sizeof(inputEntry),\
+			inputClosing, sizeof(inputClosing), inputFilePath, bias);
+	totalWrite += putContents(sourceFd, outputEntry, sizeof(outputEntry),\
+			outputClosing, sizeof(outputClosing), outputFilePath, -1);
 	totalWrite += closing(sourceFd);
 
 	close(sourceFd);
 
 	char compileCmd[bufSize];
 	sprintf(compileCmd,"gcc -o result %s",resultFilePath);
+
+	cJSON* dummy;
 
 	return 0;
 }

@@ -18,8 +18,15 @@ FetchContent_Declare(
 	GIT_TAG "curl-8_1_2"
 	)
 
+FetchContent_Declare(
+	LibcJSON
+	GIT_REPOSITORY "https://github.com/DaveGamble/cJSON.git"
+	GIT_TAG "v1.7.16"
+	)
+
 FetchContent_MakeAvailable(Libgit2)
 FetchContent_MakeAvailable(Libcurl)
+FetchContent_MakeAvailable(LibcJSON)
 
 add_subdirectory(lib)
 add_subdirectory(src)

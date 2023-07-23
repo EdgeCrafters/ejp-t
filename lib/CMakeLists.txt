@@ -8,9 +8,14 @@ add_library(diff STATIC diff.c)
 add_library(http STATIC http.c)
 add_library(info STATIC info.c)
 
-target_link_libraries(parse PUBLIC sha256 libgit2 libcurl)
+target_link_libraries(parse PUBLIC sha256 cjson)
 target_link_libraries(http PUBLIC sha256 libcurl)
 target_link_libraries(diff PUBLIC libgit2)
+
+target_compile_options( parse PUBLIC -w)
+target_compile_options( http PUBLIC -w)
+target_compile_options( diff PUBLIC -w)
+
 
 target_include_directories(parse PUBLIC ${CMAKE_SOURCE_DIR}/includes)
 target_include_directories(sha256 PUBLIC ${CMAKE_SOURCE_DIR}/includes)

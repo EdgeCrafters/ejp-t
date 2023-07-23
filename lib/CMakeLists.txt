@@ -10,7 +10,7 @@ add_library(info STATIC info.c)
 
 target_link_libraries(parse PUBLIC sha256 libgit2 libcurl)
 target_link_libraries(http PUBLIC sha256 libcurl)
-target_link_libraries(diff PUBLIC git2)
+target_link_libraries(diff PUBLIC libgit2)
 
 target_include_directories(parse PUBLIC ${CMAKE_SOURCE_DIR}/includes)
 target_include_directories(sha256 PUBLIC ${CMAKE_SOURCE_DIR}/includes)

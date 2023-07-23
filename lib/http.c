@@ -40,16 +40,15 @@ int login(char home[], char id[], char pw[])
 		list = curl_slist_append(list, "Content-Type: application/json");
 		curl_easy_setopt(curl, CURLOPT_HTTPHEADER, list);
 		
-		sprintf(payload,"{\"studentId\": \"%s\",\"password\":\"%s\"}",id,pw);
+		sprintf(payload,"{\"username\": \"%s\",\"password\":\"%s\"}",id,pw);
 		curl_easy_setopt(curl, CURLOPT_POSTFIELDS,payload);
-		
-//		curl_easy_setopt(curl, CURLOPT_COOKIEFILE,"./tmp/cookie.txt");
-//		curl_easy_setopt(curl, CURLOPT_COOKIEJAR,"./tmp/cookie.txt");
 		
 		curl_easy_setopt(curl, CURLOPT_HEADERFUNCTION, storeCookie);
 		curl_easy_setopt(curl, CURLOPT_WRITEFUNCTION, dummy);
 
 		res = curl_easy_perform(curl);
+
+		printf("url: %s, payload: %s res:%ld\n",url,payload,res);
 
 		if(res != CURLE_OK)
 			return -1;

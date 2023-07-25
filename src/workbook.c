@@ -1,41 +1,76 @@
 #include "../includes/common.h" 
-#include "../includes/parse.h"
+
+static int parseOpt(int argc, char *argv[], const char targetOpt[], const int optNum, char *optArg[])
+{
+	int c, result = 0;
+	int flags[MAXOPT] = {0};
+	
+	while((c = getopt(argc,argv,targetOpt))!=-1)
+		for(int i = 0; i < optNum; ++i)
+			if(c != '?' && c == targetOpt[2*i]){
+				flags[i] = 1;
+				strcpy(optArg[i],optarg);
+				result += 1;
+			}else if(c == '?' && optopt == targetOpt[i]){
+				fprintf(stderr, "Option -%c requires \
+						an argument.\n", optopt);
+				exit(EXIT_FAILURE);
+			}
+
+	int check = 1;
+	for(int i = 0; i<optNum; check *= flags[i++])
+		;
+	
+	if(!check || result != optNum){
+		fprintf(stderr,"Missing options check %d result %d\n", check, result);
+		exit(EXIT_FAILURE);
+	}
+
+	return result;
+}
+
+static void userLogin(const char home[])
+{
+	char userID[IDSIZE];
+	char userPW[PWSIZE];
+
+	while(1){
+		memset(userID,0,IDSIZE);memset(userPW,0,PWSIZE);
+ 	  printf("\nEnter %s ID :", home);
+ 	  scanf("%s", userID);
+  	printf("Enter %s PW :", home);
+  	scanf("%s", userPW);
+		if(!login(home, userID,userPW)){
+			fprintf(stdout,"Login Success!\n");
+			break;
+		}else
+			fprintf(stdout,"Try again");
+	}
+}
+
+static void userLogout(const char home[])
+{
+	logout(home);
+}
 
 //append additional testcase in repo
 static int add(int argc, char*argv[])
 {
-	int c, rflag = 0, lflag = 0;
-	char *rvalue = NULL, *lvalue = NULL;
+	int c, hflag = 0, lflag = 0;
+	char *hvalue = NULL, *lvalue = NULL;
 
 	printf("add : ");
 
-	while((c = getopt(argc,argv,"r:l:")))
-		switch(c)
-		{
-			case 't':
-				//testcase option
-				//additional testcase
-				rflag = 1;
-				rvalue = optarg;
-				break;
-			case 'l':
-				//location option
-				//location of repo
-				lflag = 1;
-				lvalue = optarg;
-				break;
-			case '?':
-				if(optopt == 'r' || optopt == 'l')
-					fprintf(stderr, "Option -%c requires \
-							an argument.\n", optopt);
-				else
-					fprintf(stderr, "Unknown option \
-							character '\\x%x'",optopt);
-				exit(EXIT_FAILURE);
-			default:
-				abort();
-		}
+	return 0;
+}
 
+//update exsiting testcase in repo
+static int update(int argc, char*argv[])
+{
+	int c, hflag = 0, lflag = 0;
+	char *hvalue = NULL, *lvalue = NULL;
+
+	printf("add : ");
 
 	return 0;
 }
@@ -43,61 +78,22 @@ static int add(int argc, char*argv[])
 //create new workbook in repo
 static int create(int argc, char*argv[])
 {
-	int c, rflag = 0, lflag = 0;
-	char *rvalue = NULL, *lvalue = NULL;
-	char userID[IDSIZE];
-	char userPW[PWSIZE];
+	int c, hflag = 0, lflag = 0, nflag = 0;
+	char hvalue[VALUESIZE] , lvalue[VALUESIZE], nvalue[VALUESIZE];
 
 	printf("create : ");
 
-	while((c = getopt(argc,argv,"r:l:"))!=-1)
-		switch(c)
-		{
-			case 'r':
-				//resource option
-				//resource for testcase and workbook information
-				rflag = 1;
-				rvalue = optarg;
-				break;
-			case 'l':
-				//location option
-				//location of repo
-				lflag = 1;
-				lvalue = optarg;
-				break;
-			case '?':
-				if(optopt == 'r' || optopt == 'l')
-					fprintf(stderr, "Option -%c requires \
-							an argument.\n", optopt);
-				else
-					fprintf(stderr, "Unknown option \
-							character '\\x%x'",optopt);
-				exit(EXIT_FAILURE);
-			default:
-				fprintf(stderr, "Unknown option \
-							character '\\x%x'",optopt);
-				exit(EXIT_FAILURE);
-		}
+	char *values[] = {hvalue,lvalue,nvalue};
+	char targetOpt[] = "h:l:n:";
 
-	if(!rflag || !lflag){
-		fprintf(stderr,"indispensable option missing ...");
-		exit(EXIT_FAILURE);
-	}
+	if(parseOpt(argc,argv,targetOpt,3,values));
 
-	while(1){
-		memset(userID,0,IDSIZE);memset(userPW,0,PWSIZE);
- 	  printf("\nEnter %s ID :", rvalue);
- 	  scanf("%s", userID);
-  	printf("Enter %s PW :", rvalue);
-  	scanf("%s", userPW);
-		if(!login(rvalue,userID,userPW)){
-			fprintf(stdout,"Login Success!\n");
-			break;
-		}else
-			fprintf(stdout,"Try again");
-	}
+	userLogin(hvalue);
 
-	
+	char repoAddress[BUFSIZE];
+	initRepo(hvalue,nvalue,repoAddress,BUFSIZE);
+
+	userLogout(hvalue);
 
 	return 0;
 }
@@ -118,6 +114,11 @@ int workbook(int argc, char*argv[])
 		}
 	}else if(!strncmp(command,"add",3)){
 		if(add(argc,argv)){
+			fprintf(stderr,"error...\n");
+			exit(-1);
+		}
+	}else if(!strncmp(command,"update",6)){
+		if(update(argc,argv)){
 			fprintf(stderr,"error...\n");
 			exit(-1);
 		}

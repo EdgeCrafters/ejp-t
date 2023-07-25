@@ -10,3 +10,7 @@
 #define CMDSIZE 512
 #define IDSIZE 16 
 #define PWSIZE 16 
+#define URLSIZE 512
+#define BUFSIZE 512
+#define MAXOPT 16
+#define VALUESIZE 32

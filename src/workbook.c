@@ -1,6 +1,7 @@
 #include "../includes/common.h" 
 
-static int parseOpt(int argc, char *argv[], const char targetOpt[], const int optNum, char *optArg[])
+static int parseOpt
+(int argc, char *argv[], const char targetOpt[], const int optNum, char *optArg[])
 {
 	int c, result = 0;
 	int flags[MAXOPT] = {0};
@@ -29,7 +30,8 @@ static int parseOpt(int argc, char *argv[], const char targetOpt[], const int op
 	return result;
 }
 
-static void userLogin(const char home[])
+static void userLogin
+(const char home[])
 {
 	char userID[IDSIZE];
 	char userPW[PWSIZE];
@@ -48,13 +50,15 @@ static void userLogin(const char home[])
 	}
 }
 
-static void userLogout(const char home[])
+static void userLogout
+(const char home[])
 {
 	logout(home);
 }
 
 //append additional testcase in repo
-static int add(int argc, char*argv[])
+static int add
+(int argc, char*argv[])
 {
 	int c, hflag = 0, lflag = 0;
 	char *hvalue = NULL, *lvalue = NULL;
@@ -65,7 +69,8 @@ static int add(int argc, char*argv[])
 }
 
 //update exsiting testcase in repo
-static int update(int argc, char*argv[])
+static int update
+(int argc, char*argv[])
 {
 	int c, hflag = 0, lflag = 0;
 	char *hvalue = NULL, *lvalue = NULL;
@@ -76,13 +81,15 @@ static int update(int argc, char*argv[])
 }
 
 //create new workbook in repo
-static int create(int argc, char*argv[])
+static int create
+(int argc, char*argv[])
 {
-	int c, hflag = 0, lflag = 0, nflag = 0;
-	char hvalue[VALUESIZE] , lvalue[VALUESIZE], nvalue[VALUESIZE];
-
 	printf("create : ");
 
+	// h for home address(http)
+	// l for location of resources
+	// n for name of repo
+	char hvalue[VALUESIZE] , lvalue[VALUESIZE], nvalue[VALUESIZE];
 	char *values[] = {hvalue,lvalue,nvalue};
 	char targetOpt[] = "h:l:n:";
 
@@ -91,14 +98,19 @@ static int create(int argc, char*argv[])
 	userLogin(hvalue);
 
 	char repoAddress[BUFSIZE];
-	initRepo(hvalue,nvalue,repoAddress,BUFSIZE);
+	if(initRepo(hvalue,nvalue,repoAddress,BUFSIZE)<0){
+		fprintf(stderr,"Fail to init repo ...\n");
+		exit(EXIT_FAILURE);
+	}
+	fprintf(stdout,"repo => %s\n",repoAddress);
 
 	userLogout(hvalue);
 
 	return 0;
 }
 
-int workbook(int argc, char*argv[])
+int workbook
+(int argc, char*argv[])
 {
 	char command[CMDSIZE];
 	if(argc<3 || !strcpy(command,argv[2])){

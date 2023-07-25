@@ -45,7 +45,7 @@ int login(const char home[], const char id[], const char pw[])
 		list = curl_slist_append(list,"Content-Type: application/json");
 		curl_easy_setopt(curl,CURLOPT_HTTPHEADER,list);
 
-		sprintf(payload,"{\"studentId\": \"%s\",\"password\":\"%s\"}",id,pw);
+		sprintf(payload,"{\"username\": \"%s\",\"password\":\"%s\"}",id,pw);
 		curl_easy_setopt(curl, CURLOPT_POSTFIELDS,payload);
 		
 		curl_easy_setopt(curl, CURLOPT_HEADERFUNCTION, storeCookie);

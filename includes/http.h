@@ -11,5 +11,6 @@ struct cookie{
 	int isStore;
 };
 
-int login(char hoem[], char id[], char password[]);
-int logout(char home[]);
+int login(const char hoem[], const char id[], const char password[]);
+int logout(const char home[]);
+int intiRepo(const char home[], const char repoID[]);

@@ -1,108 +1,60 @@
 #include "../includes/common.h" 
-#include "../includes/parse.h"
 
 //append additional testcase in repo
 static int add(int argc, char*argv[])
 {
-	int c, rflag = 0, lflag = 0;
-	char *rvalue = NULL, *lvalue = NULL;
+	int c, hflag = 0, lflag = 0;
+	char *hvalue = NULL, *lvalue = NULL;
 
 	printf("add : ");
 
-	while((c = getopt(argc,argv,"r:l:")))
-		switch(c)
-		{
-			case 't':
-				//testcase option
-				//additional testcase
-				rflag = 1;
-				rvalue = optarg;
-				break;
-			case 'l':
-				//location option
-				//location of repo
-				lflag = 1;
-				lvalue = optarg;
-				break;
-			case '?':
-				if(optopt == 'r' || optopt == 'l')
-					fprintf(stderr, "Option -%c requires \
-							an argument.\n", optopt);
-				else
-					fprintf(stderr, "Unknown option \
-							character '\\x%x'",optopt);
-				exit(EXIT_FAILURE);
-			default:
-				abort();
-		}
+	return 0;
+}
 
+//update exsiting testcase in repo
+static int update(int argc, char*argv[])
+{
+	int c, hflag = 0, lflag = 0;
+	char *hvalue = NULL, *lvalue = NULL;
+
+	printf("add : ");
 
 	return 0;
 }
 
 //create new workbook in repo
+// h for home address(http) l for location of resources n for name of repo
 static int create(int argc, char*argv[])
 {
-	int c, rflag = 0, lflag = 0;
-	char *rvalue = NULL, *lvalue = NULL;
-	char userID[IDSIZE];
-	char userPW[PWSIZE];
-
 	printf("create : ");
 
-	while((c = getopt(argc,argv,"r:l:"))!=-1)
-		switch(c)
-		{
-			case 'r':
-				//resource option
-				//resource for testcase and workbook information
-				rflag = 1;
-				rvalue = optarg;
-				break;
-			case 'l':
-				//location option
-				//location of repo
-				lflag = 1;
-				lvalue = optarg;
-				break;
-			case '?':
-				if(optopt == 'r' || optopt == 'l')
-					fprintf(stderr, "Option -%c requires \
-							an argument.\n", optopt);
-				else
-					fprintf(stderr, "Unknown option \
-							character '\\x%x'",optopt);
-				exit(EXIT_FAILURE);
-			default:
-				fprintf(stderr, "Unknown option \
-							character '\\x%x'",optopt);
-				exit(EXIT_FAILURE);
-		}
+	char hvalue[VALUESIZE] , lvalue[VALUESIZE], nvalue[VALUESIZE];
+	char *values[] = {hvalue,lvalue,nvalue};
+	char targetOpt[] = "h:l:n:";
 
-	if(!rflag || !lflag){
-		fprintf(stderr,"indispensable option missing ...");
+	if(parseOpt(argc,argv,targetOpt,3,values)<3){
+		fprintf(stderr,"Missing opts...\n");
 		exit(EXIT_FAILURE);
 	}
 
-	while(1){
-		memset(userID,0,IDSIZE);memset(userPW,0,PWSIZE);
- 	  printf("\nEnter %s ID :", rvalue);
- 	  scanf("%s", userID);
-  	printf("Enter %s PW :", rvalue);
-  	scanf("%s", userPW);
-		if(!login(rvalue,userID,userPW)){
-			fprintf(stdout,"Login Success!\n");
-			break;
-		}else
-			fprintf(stdout,"Try again");
-	}
-
+//	userLogin(hvalue);
+//
+//	char repoAddress[BUFSIZE];
+//	if(initRepo(hvalue,nvalue,repoAddress,BUFSIZE)<0){
+//		fprintf(stderr,"Fail to init repo ...\n");
+//		exit(EXIT_FAILURE);
+//	}
+//	fprintf(stdout,"repo => %s\n",repoAddress);
+//
+//	userLogout(hvalue);
 	
+	encode("./testcase-result",lvalue, 10);
 
 	return 0;
 }
 
-int workbook(int argc, char*argv[])
+int workbook
+(int argc, char*argv[])
 {
 	char command[CMDSIZE];
 	if(argc<3 || !strcpy(command,argv[2])){
@@ -118,6 +70,11 @@ int workbook(int argc, char*argv[])
 		}
 	}else if(!strncmp(command,"add",3)){
 		if(add(argc,argv)){
+			fprintf(stderr,"error...\n");
+			exit(-1);
+		}
+	}else if(!strncmp(command,"update",6)){
+		if(update(argc,argv)){
 			fprintf(stderr,"error...\n");
 			exit(-1);
 		}

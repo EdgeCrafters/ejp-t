@@ -2,7 +2,12 @@
 
 struct cookie session = {.isStore = 0};
 
-static size_t dummy(void *data, size_t size, size_t nmemb, void *clientp){ return size*nmemb;}
+static size_t plainWrite(void *data, size_t size, size_t nmemb, void *clientp)
+{
+	if(clientp)
+		strncpy((char*)clientp, (char*)data, nmemb);
+	return size*nmemb;
+}
 
 size_t storeCookie(char *buffer, size_t size, size_t nitems, void *userdata)
 {
@@ -44,7 +49,9 @@ int login(const char home[], const char id[], const char pw[])
 		curl_easy_setopt(curl, CURLOPT_POSTFIELDS,payload);
 		
 		curl_easy_setopt(curl, CURLOPT_HEADERFUNCTION, storeCookie);
-		curl_easy_setopt(curl, CURLOPT_WRITEFUNCTION, dummy);
+		
+		curl_easy_setopt(curl, CURLOPT_WRITEDATA, NULL);
+		curl_easy_setopt(curl, CURLOPT_WRITEFUNCTION, plainWrite);
 
 		res = curl_easy_perform(curl);
 
@@ -90,7 +97,8 @@ int logout(const char home[])
 
 		curl_easy_setopt(curl, CURLOPT_POSTFIELDS,"");
 
-		curl_easy_setopt(curl, CURLOPT_WRITEFUNCTION, dummy);
+		curl_easy_setopt(curl, CURLOPT_WRITEDATA, NULL);
+		curl_easy_setopt(curl, CURLOPT_WRITEFUNCTION, plainWrite);
 
 		res = curl_easy_perform(curl);
 
@@ -108,7 +116,7 @@ int logout(const char home[])
 	return 0;
 }
 
-int initRepo(const char home[], const char repoID[])
+int initRepo(const char home[], const char repoID[], char buffer[], size_t bufSize)
 {
 	char url[URLSIZE],cookie[BUFSIZE];
 	CURL *curl;
@@ -134,6 +142,9 @@ int initRepo(const char home[], const char repoID[])
 		curl_easy_setopt(curl, CURLOPT_HTTPHEADER, list);
 
 		curl_easy_setopt(curl, CURLOPT_POSTFIELDS,"");
+		
+		curl_easy_setopt(curl, CURLOPT_WRITEDATA, (void*)buffer);
+		curl_easy_setopt(curl, CURLOPT_WRITEFUNCTION, plainWrite);
 
 		res = curl_easy_perform(curl);
 

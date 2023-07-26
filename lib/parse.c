@@ -2,97 +2,92 @@
 #include "sha256.h"
 #include "cJSON.h"
 
-int entry(int fd)
+int convert(int resultFile, char *inputContent, int inputSize, int bias)
 {
-	printf("entry fd: %d\n", fd);
-	return write(fd,basicEntry,sizeof(basicEntry)-1);
-}
+	cJSON *root = cJSON_Parse(inputContent);
+	cJSON *result = cJSON_CreateObject();
+	if(!root || !result)
+		goto exception;
 
-int closing(int fd)
-{
-	return write(fd,basicClosing, sizeof(basicClosing)-1);
-}
+	cJSON *inputjson = cJSON_GetObjectItem(root,"input");
+	cJSON *outputjson = cJSON_GetObjectItem(root,"output");
+	if(!inputjson || !outputjson)
+		goto exception;
 
-int putContents(int sourceFd, char prefix[], size_t prefixSize,\
-		char postfix[], size_t postfixSize, char *inputPath, int bias)
-{
-	char buf[bufSize];
-	char shaBuf[bufSize];
-	int readNum, inputFd, inputNum, stored, stride;
-
-	if((inputFd =	open(inputPath, O_RDONLY)) < 0)
-		return -1;
-
-	stored = 0;
-	stride = 1;
-	inputNum = write(sourceFd,prefix,prefixSize-1);
-	while(bias >=0 && (readNum = read(inputFd,buf+stored,stride)) > 0){
-		for(int i = 0;buf[stored+i]>32 && bias >=0 && i<readNum; ++i){
-			buf[stored+i] += bias;
-		}
-
-		if(buf[stored+readNum-1] == '\n'){
-			buf[stored+readNum-1] = '\0';
-			strcat(buf,"\\n");
-			readNum += 1;
-		}
-
-		stored += readNum;
-
-		if(stored+stride >= bufSize){
-			stored = 0;
-			inputNum += write(sourceFd, buf, stored);
-		}
-	}
-	inputNum += write(sourceFd, buf, stored);
-
-	memset(buf,0,bufSize);
-	while(bias<0 && (readNum = read(inputFd, buf, bufSize-1))){
-		strcat(shaBuf,SHA256(buf));
-		strcpy(buf, SHA256(shaBuf));
-		strncpy(shaBuf, buf, 64);
-		shaBuf[64] = '\0';
-		memset(buf,0,bufSize);
+	char *inputstr, *outputstr, *resultstr, buffer[STRSIZE];
+	inputstr = inputjson->valuestring, outputstr = outputjson->valuestring, resultstr = NULL;
+	
+	for(int i = 0; inputstr[i] != '\0'; ++i){
+ 		char c = inputstr[i];
+ 
+ 		if(c > 32){
+ 			c += bias;
+ 		}else if(c != ' ' && c != '\n')
+			goto exception;
+ 		
+		buffer[i] = c;
 	}
 
-	if(bias < 0)
-		inputNum += write(sourceFd, shaBuf, 64);
+	cJSON *_input = cJSON_CreateString(buffer);
+	if(!_input)
+		goto exception;
+	cJSON_AddItemToObject(result,"input",_input);
+
+	cJSON *_output = cJSON_CreateString(SHA256(outputstr));
+	if(!_output)
+		goto exception;
+	cJSON_AddItemToObject(result,"output",_output);
 	
-	inputNum += write(sourceFd, postfix, postfixSize-1);
-
-	return inputNum;
-}
-
-int gen(int argc, char*argv[]){
-
-	char resultFilePath[bufSize], inputFilePath[bufSize], outputFilePath[bufSize];
-
-	if(argc < 4)
-		return -1;
-
-	strcpy(resultFilePath,argv[0]);
-	strcpy(inputFilePath,argv[1]);
-	strcpy(outputFilePath,argv[2]);
-	
-	int bias = atoi(argv[3]);
-	int totalWrite = 0;
-	int sourceFd = open(resultFilePath, O_WRONLY|O_CREAT|O_TRUNC,S_IRWXO|S_IRWXU); // config
-
-	printf("args => %s %s %s %d\nsourceFd => %d\n",resultFilePath, inputFilePath, outputFilePath, bias, sourceFd);
-
-	totalWrite += entry(sourceFd);
-	totalWrite += putContents(sourceFd, inputEntry, sizeof(inputEntry),\
-			inputClosing, sizeof(inputClosing), inputFilePath, bias);
-	totalWrite += putContents(sourceFd, outputEntry, sizeof(outputEntry),\
-			outputClosing, sizeof(outputClosing), outputFilePath, -1);
-	totalWrite += closing(sourceFd);
-
-	close(sourceFd);
-
-	char compileCmd[bufSize];
-	sprintf(compileCmd,"gcc -o result %s",resultFilePath);
-
-	cJSON* dummy;
+	resultstr = cJSON_Print(result);
+	int k = write(resultFile,resultstr,strlen(resultstr));
 
 	return 0;
+	
+exception:
+	fprintf(stderr, "error...\n");
+	return -1;
+}
+
+int encode(char resultPath[], char inputPath[], int bias)
+{
+	DIR *inputDir, *resultDir;
+	if((inputDir = opendir(inputPath)) == NULL)
+		goto exception;
+
+	struct dirent *dent;
+	while((dent = readdir(inputDir))){
+		if(dent->d_type != DT_REG)
+			continue;
+
+		char filename[BUFSIZE],*extension;
+		strcpy(filename,dent->d_name);extension = getExtension(filename);
+		if(strncmp(extension,".json",5))
+			continue;
+
+		char inputFilePath[BUFSIZE], resultFilePath[BUFSIZE];
+		sprintf(inputFilePath,"%s/%s",inputPath,filename);
+		sprintf(resultFilePath,"%s/",resultPath);
+		strncat(resultFilePath,filename,extension-filename);
+		strcat(resultFilePath,".result.json");
+
+		int resultFile = open(resultFilePath, O_WRONLY|O_CREAT|O_TRUNC,S_IRWXO|S_IRWXU);
+		int inputFile = open(inputFilePath, O_RDONLY);
+
+		char inputStr[STRSIZE];
+		read(inputFile, inputStr, STRSIZE);
+		
+		fprintf(stdout,"converting %s to %s...\n",inputFilePath, resultFilePath);
+		convert(resultFile, inputStr, STRSIZE, bias);
+
+		close(inputFile);
+		close(resultFile);
+	}
+
+	closedir(inputDir);
+	closedir(resultDir);
+	return 0;
+
+exception:
+	fprintf(stderr, "error...\n");
+	return -1;
 }

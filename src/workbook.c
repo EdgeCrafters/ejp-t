@@ -48,7 +48,7 @@ static int create(int argc, char*argv[])
 //
 //	userLogout(hvalue);
 	
-	encode("./testcase/a.result.json","./testcase/a.json", 10);
+	encode("./testcase-result",lvalue, 10);
 
 	return 0;
 }

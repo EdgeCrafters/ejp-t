@@ -50,17 +50,44 @@ exception:
 
 int encode(char resultPath[], char inputPath[], int bias)
 {
-	int resultFile = open(resultPath, O_WRONLY|O_CREAT|O_TRUNC,S_IRWXO|S_IRWXU);
-	int inputFile = open(inputPath, O_RDONLY);
+	DIR *inputDir, *resultDir;
+	if((inputDir = opendir(inputPath)) == NULL)
+		goto exception;
 
-	char inputStr[STRSIZE];
-	read(inputFile, inputStr, STRSIZE);
+	struct dirent *dent;
+	while((dent = readdir(inputDir))){
+		if(dent->d_type != DT_REG)
+			continue;
 
-	fprintf(stdout,"converting %s to %s...\n",inputPath, resultPath);
-	convert(resultFile, inputStr, STRSIZE, bias);
+		char filename[BUFSIZE],*extension;
+		strcpy(filename,dent->d_name);extension = getExtension(filename);
+		if(strncmp(extension,".json",5))
+			continue;
 
-	close(inputFile);
-	close(resultFile);
+		char inputFilePath[BUFSIZE], resultFilePath[BUFSIZE];
+		sprintf(inputFilePath,"%s/%s",inputPath,filename);
+		sprintf(resultFilePath,"%s/",resultPath);
+		strncat(resultFilePath,filename,extension-filename);
+		strcat(resultFilePath,".result.json");
 
+		int resultFile = open(resultFilePath, O_WRONLY|O_CREAT|O_TRUNC,S_IRWXO|S_IRWXU);
+		int inputFile = open(inputFilePath, O_RDONLY);
+
+		char inputStr[STRSIZE];
+		read(inputFile, inputStr, STRSIZE);
+		
+		fprintf(stdout,"converting %s to %s...\n",inputFilePath, resultFilePath);
+		convert(resultFile, inputStr, STRSIZE, bias);
+
+		close(inputFile);
+		close(resultFile);
+	}
+
+	closedir(inputDir);
+	closedir(resultDir);
 	return 0;
+
+exception:
+	fprintf(stderr, "error...\n");
+	return -1;
 }

@@ -50,3 +50,10 @@ void userLogout(const char home[])
 	logout(home);
 }
 
+char* getExtension(char *target)
+{
+	int i;
+	for(i = 0; target[i] != '.' && target != '\0'; ++i)
+		;
+	return target+i;
+}

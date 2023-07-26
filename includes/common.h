@@ -22,3 +22,4 @@
 int parseOpt(int argc, char *argv[], const char targetOpt[], const int optNum, char *optArg[]);
 void userLogin(const char home[]);
 void userLogout(const char home[]);
+char* getExtension(char *target);

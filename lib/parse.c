@@ -2,97 +2,76 @@
 #include "sha256.h"
 #include "cJSON.h"
 
-int entry(int fd)
+int convert(int resultFile, char *inputContent, int inputSize, int bias)
 {
-	printf("entry fd: %d\n", fd);
-	return write(fd,basicEntry,sizeof(basicEntry)-1);
-}
-
-int closing(int fd)
-{
-	return write(fd,basicClosing, sizeof(basicClosing)-1);
-}
-
-int putContents(int sourceFd, char prefix[], size_t prefixSize,\
-		char postfix[], size_t postfixSize, char *inputPath, int bias)
-{
-	char buf[bufSize];
-	char shaBuf[bufSize];
-	int readNum, inputFd, inputNum, stored, stride;
-
-	if((inputFd =	open(inputPath, O_RDONLY)) < 0)
+	cJSON *root = cJSON_Parse(inputContent);
+	cJSON *result = cJSON_CreateObject();
+	if(!root || !result){
+		fprintf(stderr,"cJSON fail...\n");
 		return -1;
-
-	stored = 0;
-	stride = 1;
-	inputNum = write(sourceFd,prefix,prefixSize-1);
-	while(bias >=0 && (readNum = read(inputFd,buf+stored,stride)) > 0){
-		for(int i = 0;buf[stored+i]>32 && bias >=0 && i<readNum; ++i){
-			buf[stored+i] += bias;
-		}
-
-		if(buf[stored+readNum-1] == '\n'){
-			buf[stored+readNum-1] = '\0';
-			strcat(buf,"\\n");
-			readNum += 1;
-		}
-
-		stored += readNum;
-
-		if(stored+stride >= bufSize){
-			stored = 0;
-			inputNum += write(sourceFd, buf, stored);
-		}
 	}
-	inputNum += write(sourceFd, buf, stored);
-
-	memset(buf,0,bufSize);
-	while(bias<0 && (readNum = read(inputFd, buf, bufSize-1))){
-		strcat(shaBuf,SHA256(buf));
-		strcpy(buf, SHA256(shaBuf));
-		strncpy(shaBuf, buf, 64);
-		shaBuf[64] = '\0';
-		memset(buf,0,bufSize);
+	cJSON *inputjson = cJSON_GetObjectItem(root,"input");
+	cJSON *outputjson = cJSON_GetObjectItem(root,"output");
+	if(!inputjson || !outputjson){
+		fprintf(stderr, "missing target...\n");
+		return -1;
 	}
 
-	if(bias < 0)
-		inputNum += write(sourceFd, shaBuf, 64);
+	const char *inputstr = inputjson->valuestring;
+	const char *outputstr = outputjson->valuestring;
+	char buffer[STRSIZE];
 	
-	inputNum += write(sourceFd, postfix, postfixSize-1);
+	for(int i = 0; inputstr[i] != '\0'; ++i){
+ 		char c = inputstr[i];
+ 
+ 		if(c > 32){
+ 			c += bias;
+ 		}else if(c != ' ' && c != '\n'){
+ 			fprintf(stderr, "invalid character ...\n");
+ 			return -1;
+ 		}
+ 		
+		buffer[i] = c;
+	}
 
-	return inputNum;
+	cJSON *_input = cJSON_CreateString(buffer);
+	if(!_input){
+		fprintf(stderr, "cJSON error...\n");
+		return -1;
+	}
+	cJSON_AddItemToObject(result,"input",_input);
+
+	cJSON *_output = cJSON_CreateString(SHA256(outputstr));
+	cJSON_AddItemToObject(result,"output",_output);
+	
+	char *resultStr = cJSON_Print(result);
+	int k = write(resultFile,resultStr,strlen(resultStr));
+
+	return 0;
 }
 
-int gen(int argc, char*argv[]){
+int encode(int argc, char*argv[]){
 
-	char resultFilePath[bufSize], inputFilePath[bufSize], outputFilePath[bufSize];
+	char resultPath[BUFSIZE], inputPath[BUFSIZE];
 
-	if(argc < 4)
+	if(argc < 3)
 		return -1;
 
-	strcpy(resultFilePath,argv[0]);
-	strcpy(inputFilePath,argv[1]);
-	strcpy(outputFilePath,argv[2]);
+	strcpy(resultPath,argv[0]);
+	strcpy(inputPath,argv[1]);
 	
-	int bias = atoi(argv[3]);
-	int totalWrite = 0;
-	int sourceFd = open(resultFilePath, O_WRONLY|O_CREAT|O_TRUNC,S_IRWXO|S_IRWXU); // config
+	int bias = atoi(argv[2]);
+	int resultFile = open(resultPath, O_WRONLY|O_CREAT|O_TRUNC,S_IRWXO|S_IRWXU); // config
+	int inputFile = open(inputPath, O_RDONLY);
 
-	printf("args => %s %s %s %d\nsourceFd => %d\n",resultFilePath, inputFilePath, outputFilePath, bias, sourceFd);
+	char inputStr[STRSIZE];
 
-	totalWrite += entry(sourceFd);
-	totalWrite += putContents(sourceFd, inputEntry, sizeof(inputEntry),\
-			inputClosing, sizeof(inputClosing), inputFilePath, bias);
-	totalWrite += putContents(sourceFd, outputEntry, sizeof(outputEntry),\
-			outputClosing, sizeof(outputClosing), outputFilePath, -1);
-	totalWrite += closing(sourceFd);
+	read(inputFile, inputStr, STRSIZE);
 
-	close(sourceFd);
+	convert(resultFile, inputStr, STRSIZE, bias);
 
-	char compileCmd[bufSize];
-	sprintf(compileCmd,"gcc -o result %s",resultFilePath);
-
-	cJSON* dummy;
+	close(inputFile);
+	close(resultFile);
 
 	return 0;
 }

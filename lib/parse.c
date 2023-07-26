@@ -6,68 +6,57 @@ int convert(int resultFile, char *inputContent, int inputSize, int bias)
 {
 	cJSON *root = cJSON_Parse(inputContent);
 	cJSON *result = cJSON_CreateObject();
-	if(!root || !result){
-		fprintf(stderr,"cJSON fail...\n");
-		return -1;
-	}
+	if(!root || !result)
+		goto exception;
+
 	cJSON *inputjson = cJSON_GetObjectItem(root,"input");
 	cJSON *outputjson = cJSON_GetObjectItem(root,"output");
-	if(!inputjson || !outputjson){
-		fprintf(stderr, "missing target...\n");
-		return -1;
-	}
+	if(!inputjson || !outputjson)
+		goto exception;
 
-	const char *inputstr = inputjson->valuestring;
-	const char *outputstr = outputjson->valuestring;
-	char buffer[STRSIZE];
+	char *inputstr, *outputstr, *resultstr, buffer[STRSIZE];
+	inputstr = inputjson->valuestring, outputstr = outputjson->valuestring, resultstr = NULL;
 	
 	for(int i = 0; inputstr[i] != '\0'; ++i){
  		char c = inputstr[i];
  
  		if(c > 32){
  			c += bias;
- 		}else if(c != ' ' && c != '\n'){
- 			fprintf(stderr, "invalid character ...\n");
- 			return -1;
- 		}
+ 		}else if(c != ' ' && c != '\n')
+			goto exception;
  		
 		buffer[i] = c;
 	}
 
 	cJSON *_input = cJSON_CreateString(buffer);
-	if(!_input){
-		fprintf(stderr, "cJSON error...\n");
-		return -1;
-	}
+	if(!_input)
+		goto exception;
 	cJSON_AddItemToObject(result,"input",_input);
 
 	cJSON *_output = cJSON_CreateString(SHA256(outputstr));
+	if(!_output)
+		goto exception;
 	cJSON_AddItemToObject(result,"output",_output);
 	
-	char *resultStr = cJSON_Print(result);
-	int k = write(resultFile,resultStr,strlen(resultStr));
+	resultstr = cJSON_Print(result);
+	int k = write(resultFile,resultstr,strlen(resultstr));
 
 	return 0;
+	
+exception:
+	fprintf(stderr, "error...\n");
+	return -1;
 }
 
-int encode(int argc, char*argv[]){
-
-	char resultPath[BUFSIZE], inputPath[BUFSIZE];
-
-	if(argc < 3)
-		return -1;
-
-	strcpy(resultPath,argv[0]);
-	strcpy(inputPath,argv[1]);
-	
-	int bias = atoi(argv[2]);
-	int resultFile = open(resultPath, O_WRONLY|O_CREAT|O_TRUNC,S_IRWXO|S_IRWXU); // config
+int encode(char resultPath[], char inputPath[], int bias)
+{
+	int resultFile = open(resultPath, O_WRONLY|O_CREAT|O_TRUNC,S_IRWXO|S_IRWXU);
 	int inputFile = open(inputPath, O_RDONLY);
 
 	char inputStr[STRSIZE];
-
 	read(inputFile, inputStr, STRSIZE);
 
+	fprintf(stdout,"converting %s to %s...\n",inputPath, resultPath);
 	convert(resultFile, inputStr, STRSIZE, bias);
 
 	close(inputFile);

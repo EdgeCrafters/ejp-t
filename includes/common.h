@@ -12,7 +12,7 @@
 
 #define STRSIZE 1048576
 
-#define BUFSIZE 512
+#define BUFSIZE 1024 
 #define CMDSIZE 512
 #define URLSIZE 512
 

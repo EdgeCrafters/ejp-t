@@ -10,6 +10,7 @@ add_library(common STATIC common.c)
 
 target_link_libraries(http PRIVATE libcurl)
 target_link_libraries(diff PRIVATE libgit2)
+target_link_libraries(parse PRIVATE http)
 
 target_compile_options(http PUBLIC -w)
 target_compile_options(diff PUBLIC -w)

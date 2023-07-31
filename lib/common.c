@@ -1,6 +1,7 @@
 #include "common.h"
 
-int parseOpt(int argc, char *argv[], const char targetOpt[], const int optNum, char *optArg[])
+int parseOpt(int argc, char *argv[], const char targetOpt[], const int optNum,\
+		char *optArg[], char *caches[])
 {
 	int c, result = 0;
 	int flags[MAXOPT] = {0};
@@ -17,13 +18,24 @@ int parseOpt(int argc, char *argv[], const char targetOpt[], const int optNum, c
 				exit(EXIT_FAILURE);
 			}
 
-	for(int i = 0, check = 1; i<optNum; check *= flags[i++])
-		if(!check){
-			fprintf(stderr,"Missing options require %d, receive %d\n", check, result);
-			exit(EXIT_FAILURE);
-		}
+	for(int i = 0; i<optNum; ++i)
+		if(flags[i]){
+			continue;
+		}else if(caches[i]){
+			int cache;char buf[BUFSIZE];
+			if((cache = open(caches[i], O_RDONLY)) < 0 
+					|| read(cache, buf, BUFSIZE) < 0)
+				goto exception;
+
+			strcpy(optArg[i],buf);
+		}else
+			goto exception;
 
 	return result;
+	
+exception:
+	fprintf(stderr,"Missing options require %d, receive %d\n", optNum, result);
+	exit(EXIT_FAILURE);
 }
 
 void userLogin(const char home[])

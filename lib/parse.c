@@ -88,6 +88,7 @@ int encode(char resultPath[], char inputPath[], char biases[], char title[], cha
 	DIR *inputDir;
 	if((inputDir = opendir(inputPath)) == NULL){
 		sprintf(error,"opendir");
+		fprintf(stderr,"inputDir : %s \n", inputPath);
 		goto exception;
 	}
 
@@ -119,7 +120,7 @@ int encode(char resultPath[], char inputPath[], char biases[], char title[], cha
 			
 		fprintf(stdout,"converting %s to %s...\n",inputFilePath, resultFilePath);
 
-		if(!strncmp(filename,"info.",5)){
+		if(!strncmp(filename,"info",4)){
 			cnvtInfo(resultFile, inputStr, STRSIZE, title, description);
 
 			close(inputFile);

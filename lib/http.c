@@ -187,11 +187,13 @@ int uploadProblem(const char home[], const char repoID[], char title[], char des
 		curl_easy_setopt(curl, CURLOPT_CONNECTTIMEOUT, 5L);
 
 		list = curl_slist_append(list,cookie);
+		list = curl_slist_append(list, "Content-Type: application/json");
 		curl_easy_setopt(curl, CURLOPT_HTTPHEADER, list);
 
 		sprintf(payload,"{\"title\": \"%s\",\"text\":\"%s\"}",title,description);
 		curl_easy_setopt(curl, CURLOPT_POSTFIELDS,payload);
-		
+		fprintf(stderr,"\n%s\n",payload);
+
 		curl_easy_setopt(curl, CURLOPT_WRITEDATA, NULL);
 		curl_easy_setopt(curl, CURLOPT_WRITEFUNCTION, plainWrite);
 

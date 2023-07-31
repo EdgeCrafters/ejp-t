@@ -10,5 +10,5 @@ struct cookie{
 
 int login(const char hoem[], const char id[], const char password[]);
 int logout(const char home[]);
-int intiRepo(const char home[], const char repoID[], char buffer[], size_t bufSize);
+int initRepo(const char home[], const char repoID[], char buffer[], size_t bufSize);
 int uploadProblem(const char home[], const char repoID[], char title[], char description[]);

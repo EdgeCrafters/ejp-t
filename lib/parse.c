@@ -2,7 +2,34 @@
 #include "sha256.h"
 #include "cJSON.h"
 
-int convert(int resultFile, char *inputContent, int inputSize, int bias)
+int cnvtInfo(int resultFile, char *inputContent, int inputSize, char title[], char description[])
+{
+	cJSON *root = cJSON_Parse(inputContent);
+	cJSON *result = cJSON_CreateObject();
+	if(!root || !result)
+		goto exception;
+
+	cJSON *titlejson= cJSON_GetObjectItem(root,"title");
+	cJSON *descriptionjson = cJSON_GetObjectItem(root,"description");
+	if(!titlejson || !descriptionjson)
+		goto exception;
+
+	char *titlestr, *descriptionstr;
+	titlestr = titlejson->valuestring, descriptionstr = descriptionjson->valuestring;
+	strcpy(title,titlestr);
+	strcpy(description, descriptionstr);
+
+	if(write(resultFile,inputContent,strlen(inputContent)) < 0)
+		goto exception;
+
+	return 0;
+	
+exception:
+	fprintf(stderr, "convert Info error...\n");
+	return -1;
+}
+
+int cnvtTC(int resultFile, char *inputContent, int inputSize, char bias)
 {
 	cJSON *root = cJSON_Parse(inputContent);
 	cJSON *result = cJSON_CreateObject();
@@ -39,21 +66,32 @@ int convert(int resultFile, char *inputContent, int inputSize, int bias)
 	cJSON_AddItemToObject(result,"output",_output);
 	
 	resultstr = cJSON_Print(result);
-	int k = write(resultFile,resultstr,strlen(resultstr));
+	if(write(resultFile,resultstr,strlen(resultstr)) == 0)
+		goto exception;
 
 	return 0;
 	
 exception:
-	fprintf(stderr, "error...\n");
+	fprintf(stderr, "convert TestCase error...\n");
 	return -1;
 }
 
-int encode(char resultPath[], char inputPath[], int bias)
+int encode(char resultPath[], char inputPath[], char biases[], char title[], char description[])
 {
-	DIR *inputDir, *resultDir;
-	if((inputDir = opendir(inputPath)) == NULL)
-		goto exception;
+	char error[STRSIZE];
 
+	if(mkdir(resultPath, S_IRWXU|S_IRWXO)<0 && errno != EEXIST){
+		sprintf(error,"mkdir %d ", errno);
+		goto exception;
+	}
+
+	DIR *inputDir;
+	if((inputDir = opendir(inputPath)) == NULL){
+		sprintf(error,"opendir");
+		goto exception;
+	}
+
+	srand(time(NULL));
 	struct dirent *dent;
 	while((dent = readdir(inputDir))){
 		if(dent->d_type != DT_REG)
@@ -63,31 +101,44 @@ int encode(char resultPath[], char inputPath[], int bias)
 		strcpy(filename,dent->d_name);extension = getExtension(filename);
 		if(strncmp(extension,".json",5))
 			continue;
+		*extension = '\0';
 
 		char inputFilePath[BUFSIZE], resultFilePath[BUFSIZE];
-		sprintf(inputFilePath,"%s/%s",inputPath,filename);
-		sprintf(resultFilePath,"%s/",resultPath);
-		strncat(resultFilePath,filename,extension-filename);
-		strcat(resultFilePath,".result.json");
+		sprintf(inputFilePath,"%s/%s.json",inputPath,filename);
+		sprintf(resultFilePath,"%s/%s.result.json",resultPath,filename);
 
-		int resultFile = open(resultFilePath, O_WRONLY|O_CREAT|O_TRUNC,S_IRWXO|S_IRWXU);
-		int inputFile = open(inputFilePath, O_RDONLY);
+		int resultFile, inputFile;
+		if((resultFile = open(resultFilePath, O_WRONLY|O_CREAT|O_TRUNC,S_IRWXO|S_IRWXU)) <0 
+				|| (inputFile = open(inputFilePath, O_RDONLY)) < 0){
+			sprintf(error,"open result %d %s input %d %s", resultFile,resultFilePath, inputFile, inputFilePath);
+			goto exception;
+		}
 
 		char inputStr[STRSIZE];
 		read(inputFile, inputStr, STRSIZE);
-		
+			
 		fprintf(stdout,"converting %s to %s...\n",inputFilePath, resultFilePath);
-		convert(resultFile, inputStr, STRSIZE, bias);
+
+		if(!strncmp(filename,"info.",5)){
+			cnvtInfo(resultFile, inputStr, STRSIZE, title, description);
+
+			close(inputFile);
+			close(resultFile);
+			continue;
+		}
+		
+		static char bias; static int biasIdx = 0;
+		biases[biasIdx++] = (bias = rand()%256);
+		cnvtTC(resultFile, inputStr, STRSIZE, bias);
 
 		close(inputFile);
 		close(resultFile);
 	}
 
 	closedir(inputDir);
-	closedir(resultDir);
 	return 0;
 
 exception:
-	fprintf(stderr, "error...\n");
+	fprintf(stderr, "%s error...\n", error);
 	return -1;
 }

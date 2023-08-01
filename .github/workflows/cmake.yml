@@ -22,7 +22,7 @@ jobs:
 
     - name: Build Environment
       # Build your program with the given configuration
-      run: cmake -E make_directory build && cmake ..
+      run: cmake -E make_directory build && cd build && cmake ..
 
     - name: Build
       working-directory: ${{github.workspace}}/build

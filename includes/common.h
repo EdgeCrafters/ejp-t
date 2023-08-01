@@ -10,6 +10,8 @@
 #include <dirent.h>
 #include <errno.h>
 
+#include "cJSON.h"
+
 #define STRSIZE 1048576
 
 #define BUFSIZE 1024 
@@ -21,6 +23,13 @@
 #define IDSIZE 16 
 #define PWSIZE 16 
 #define MAXOPT 16
+
+struct repoInfo{
+	char *name;
+	char *localPath;
+	char *remoteAddr;
+	int id;
+};
 
 int parseOpt(int argc,char *argv[],const char targetOpt[],const int optNum,char *optArg[],char *caches[]);
 void userLogin(const char home[]);

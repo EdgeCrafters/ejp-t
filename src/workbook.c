@@ -2,7 +2,7 @@
 const char homeCache[] = "./cache/home";
 const char locationCache[] = "./cache/location";
 
-static int makeProblem(char home[], char repoID[], char workbook[], char result[])
+static int makeProblem(char home[], char repoID[], char problemDir[], char problem[], char result[])
 {
 	char error[STRSIZE];
 	if(mkdir(result, S_IRWXU|S_IRWXO)<0 && errno != EEXIST){
@@ -10,32 +10,16 @@ static int makeProblem(char home[], char repoID[], char workbook[], char result[
 		goto exception;
 	}
 
-	DIR *workbookDir;
-	if((workbookDir = opendir(workbook)) == NULL){
-		sprintf(error,"opendir %d ", errno);
+	char resultDir[URLSIZE];
+	sprintf(resultDir,"%s/%s",result, problem);
+	char title[STRSIZE], description[STRSIZE], biases[BUFSIZE];
+	if(encode(resultDir,problemDir, biases, title, description) < 0)
 		goto exception;
+
+	if(uploadProblem(home,repoID,title,description)<0){
+		fprintf(stderr,"Fail to upload problem %s ...\n",title);
+		exit(EXIT_FAILURE);
 	}
-
-	struct dirent *dent;
-	while((dent = readdir(workbookDir))){
-		if(dent->d_type != DT_DIR)
-			continue;
-
-		char resultDir[URLSIZE], problemDir[URLSIZE], problem[URLSIZE];
-		strcpy(problem,dent->d_name);
-		sprintf(resultDir,"%s/%s",result, problem);
-		sprintf(problemDir,"%s/%s",workbook, problem);
-		char title[STRSIZE], description[STRSIZE], biases[BUFSIZE];
-		if(encode(resultDir,problemDir, biases, title, description) < 0)
-			goto exception;
-
-//		if(uploadProblem(home,repoID,title,description)<0){
-//			fprintf(stderr,"Fail to upload problem %s ...\n",title);
-//			exit(EXIT_FAILURE);
-//		}
-	}
-	
-	closedir(workbookDir);
 
 	return 0;
 
@@ -106,8 +90,8 @@ static int create(int argc, char*argv[])
 		exit(EXIT_FAILURE);
 	}
 
-//	userLogin(home);
-//
+	userLogin(home);
+
 //	char repoAddress[BUFSIZE];
 //	if(initRepo(home,repoID,repoAddress,BUFSIZE)<0){
 //		fprintf(stderr,"Fail to init repo ...\n");
@@ -115,13 +99,26 @@ static int create(int argc, char*argv[])
 //	}else
 //		fprintf(stdout,"Init repo (repo address : %s)\n",repoAddress);
 	
-	fprintf(stdout,"Creating workbook ... ");
-	makeProblem(home,repoID,location,"./repomock");
-	fprintf(stdout,"Complete !\n");
+	DIR *workbookDir;
+	if((workbookDir = opendir(location)) == NULL)
+		goto exception;
+	char problem[URLSIZE];
+	struct dirent *dent;
+	while((dent = readdir(workbookDir)))
+		if(dent->d_type == DT_DIR && dent->d_name[0] != '.')
+		{
+			sprintf(problem,"%s/%s",location,dent->d_name);
+			makeProblem(home,repoID,problem,dent->d_name,"./repomock");
+		}
+	closedir(workbookDir);
 
-//	userLogout(home);
+	userLogout(home);
 
 	return 0;
+
+exception:
+	fprintf(stderr,"error ...\n");
+	exit(EXIT_FAILURE);
 }
 
 int workbook

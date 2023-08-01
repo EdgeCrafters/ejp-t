@@ -26,3 +26,10 @@ add_subdirectory(src)
 
 #configure_file("${CMAKE_CURRENT_SOURCE_DIR}/testcase/a.input" "${CMAKE_BINARY_DIR}" COPYONLY)
 file(COPY ${CMAKE_CURRENT_SOURCE_DIR}/workbook0/ DESTINATION ${CMAKE_CURRENT_BINARY_DIR}/workbook0/)
+
+
+if(CMAKE_CXX_COMPILER_ID MATCHES "GNU|Clang")
+    set(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} -w")
+elseif(MSVC)
+    set(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} /w")
+endif()

@@ -116,7 +116,7 @@ int logout(const char home[])
 	return 0;
 }
 
-int initRepo(const char home[], const char repoID[], char buffer[], size_t bufSize)
+int initRepo(const char home[], const char repoName[], char buffer[], size_t bufSize)
 {
 	char url[URLSIZE],cookie[BUFSIZE];
 	CURL *curl;
@@ -125,7 +125,7 @@ int initRepo(const char home[], const char repoID[], char buffer[], size_t bufSi
 	long stat;
 
 	memset(url,0,URLSIZE);
-	sprintf(url,"%s/repos/%s",home,repoID);
+	sprintf(url,"%s/repos/%s",home,repoName);
 
 	memset(cookie,0,BUFSIZE);
 	sprintf(cookie,"Cookie: %s",session.data);
@@ -164,7 +164,7 @@ int initRepo(const char home[], const char repoID[], char buffer[], size_t bufSi
 	return 0;
 }
 
-int uploadProblem(const char home[], const char repoID[], char title[], char description[])
+int uploadProblem(const char home[], const int repoID, char title[], char description[])
 {
 	char url[URLSIZE],cookie[BUFSIZE],payload[STRSIZE];
 	CURL *curl;
@@ -173,7 +173,7 @@ int uploadProblem(const char home[], const char repoID[], char title[], char des
 	long stat;
 
 	memset(url,0,URLSIZE);
-	sprintf(url,"%s/problem/%s",home,repoID);
+	sprintf(url,"%s/problem/%d",home,repoID);
 
 	memset(cookie,0,BUFSIZE);
 	sprintf(cookie,"Cookie: %s",session.data);

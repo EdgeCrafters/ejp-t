@@ -24,8 +24,8 @@ FetchContent_MakeAvailable(libcurl)
 add_subdirectory(lib)
 add_subdirectory(src)
 
-#configure_file("${CMAKE_CURRENT_SOURCE_DIR}/testcase/a.input" "${CMAKE_BINARY_DIR}" COPYONLY)
 file(COPY ${CMAKE_CURRENT_SOURCE_DIR}/workbook0/ DESTINATION ${CMAKE_CURRENT_BINARY_DIR}/workbook0/)
+file(COPY ${CMAKE_CURRENT_SOURCE_DIR}/.ejs/ DESTINATION ${CMAKE_CURRENT_BINARY_DIR}/.ejs/)
 
 
 if(CMAKE_CXX_COMPILER_ID MATCHES "GNU|Clang")

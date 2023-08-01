@@ -1,8 +1,46 @@
 #include "../includes/common.h" 
-const char homeCache[] = "./cache/home";
-const char locationCache[] = "./cache/location";
 
-static int makeProblem(char home[], char repoID[], char problemDir[], char problem[], char result[])
+const char homeCache[] = "./.ejs/cache/home.txt";
+const char problemLocationCache[] = "./.ejs/cache/problemLocation.txt";
+const char wbLocationCache[] = "./.ejs/cache/wbLocation.txt";
+const char repos[] = "./.ejs/repos";
+
+static int findRepo(char home[], char repoName[], struct repoInfo *info)
+{
+	char repoPath[URLSIZE];sprintf(repoPath,"%s/%s/%s",repos,home,repoName);
+	DIR *repoDir;
+	if((repoDir = opendir(repoPath))==NULL)
+		goto exception;
+	
+	struct dirent *dent;
+	while((dent = readdir(repoDir))){
+		if(dent->d_type != DT_REG || strncmp(dent->d_name,"info",4))	
+			continue;
+		
+		char infoPath[URLSIZE];sprintf(infoPath,"%s/%s",repoPath,dent->d_name);
+		int infoFile; char buf[BUFSIZE];
+		if((infoFile = open(infoPath,O_RDONLY))<0
+				|| read(infoFile, buf, BUFSIZE)<0)
+			goto exception;
+		cJSON *root = cJSON_Parse(buf);
+		cJSON *remoteAddrjson = cJSON_GetObjectItem(root,"remoteAddr");
+		cJSON *idjson = cJSON_GetObjectItem(root,"id");
+		if(!remoteAddrjson || !idjson)
+			goto exception;
+
+		info->name = strdup(repoName);
+		info->localPath = strdup(repoPath);
+		info->remoteAddr = strdup(remoteAddrjson->valuestring);
+		info->id = atoi(idjson->valuestring);
+
+		return 0;
+	}
+
+exception:
+	return -1;
+}
+
+static int makeProblem(char home[], char repoName[], char problemDir[], char problem[], char result[])
 {
 	char error[STRSIZE];
 	if(mkdir(result, S_IRWXU|S_IRWXO)<0 && errno != EEXIST){
@@ -16,10 +54,16 @@ static int makeProblem(char home[], char repoID[], char problemDir[], char probl
 	if(encode(resultDir,problemDir, biases, title, description) < 0)
 		goto exception;
 
-	if(uploadProblem(home,repoID,title,description)<0){
-		fprintf(stderr,"Fail to upload problem %s ...\n",title);
-		exit(EXIT_FAILURE);
+	struct repoInfo info;
+	if(findRepo(home, repoName, &info) < 0){
+		sprintf(error,"repoInfo");
+		goto exception;
 	}
+
+//	if(uploadProblem(home,info.id,title,description)<0){
+//		fprintf(stderr,"Fail to upload problem %s ...\n",title);
+//		exit(EXIT_FAILURE);
+//	}
 
 	return 0;
 
@@ -33,7 +77,7 @@ static int delete(int argc, char*argv[])
 {
 	char hvalue[VALUESIZE] , lvalue[VALUESIZE], nvalue[VALUESIZE];
 	char *values[] = {hvalue,lvalue,nvalue};
-	char *cache[] = {homeCache, locationCache, NULL};
+	char *cache[] = {homeCache, problemLocationCache, NULL};
 	
 	printf("delete : ");
 	if(parseOpt(argc,argv,"h:l:n:",3,values,cache)<3){
@@ -49,7 +93,7 @@ static int append(int argc, char*argv[])
 {
 	char hvalue[VALUESIZE] , lvalue[VALUESIZE], nvalue[VALUESIZE];
 	char *values[] = {hvalue,lvalue,nvalue};
-	char *cache[] = {homeCache, locationCache, NULL};
+	char *cache[] = {homeCache, problemLocationCache, NULL};
 	
 	printf("append : ");
 	if(parseOpt(argc,argv,"h:l:n:",3,values,cache)<3){
@@ -65,7 +109,7 @@ static int update(int argc, char*argv[])
 {
 	char hvalue[VALUESIZE] , lvalue[VALUESIZE], nvalue[VALUESIZE];
 	char *values[] = {hvalue,lvalue,nvalue};
-	char *cache[] = {homeCache, locationCache, NULL};
+	char *cache[] = {homeCache, problemLocationCache, NULL};
 	
 	printf("update : ");
 	if(parseOpt(argc,argv,"h:l:n:",3,values,cache)<3){
@@ -80,20 +124,27 @@ static int update(int argc, char*argv[])
 // h for home address(http) l for location of resources n for name of repo
 static int create(int argc, char*argv[])
 {
-	char home[VALUESIZE] , location[VALUESIZE], repoID[VALUESIZE];
-	char *values[] = {home,location,repoID};
-	char *cache[] = {homeCache, locationCache, NULL};
-
 	printf("create : ");
+	char home[VALUESIZE] , location[VALUESIZE], repoName[VALUESIZE];
+	char *values[] = {home,location,repoName};
+	char *cache[] = {homeCache, wbLocationCache, NULL};
 	if(parseOpt(argc,argv,"h:l:n:",3,values,cache)<3){
 		fprintf(stderr,"Missing opts...\n");
 		exit(EXIT_FAILURE);
 	}
+	
+	char homeAddr[URLSIZE]; sprintf(homeAddr,"%s/%s",repos,home);
+	if(mkdir(homeAddr, S_IRWXU|S_IRWXO)<0 && errno != EEXIST)
+		goto exception;
+	char repoAddr[URLSIZE]; sprintf(repoAddr,"%s/%s",homeAddr,repoName);
+	if(mkdir(repoAddr, S_IRWXU|S_IRWXO)<0 && errno != EEXIST)
+		goto exception;
 
-	userLogin(home);
+//	userLogin(home);
 
+// ******** git clone & store repo info in cache ************//
 //	char repoAddress[BUFSIZE];
-//	if(initRepo(home,repoID,repoAddress,BUFSIZE)<0){
+//	if(initRepo(home,repoName,repoAddress,BUFSIZE)<0){
 //		fprintf(stderr,"Fail to init repo ...\n");
 //		exit(EXIT_FAILURE);
 //	}else
@@ -108,11 +159,11 @@ static int create(int argc, char*argv[])
 		if(dent->d_type == DT_DIR && dent->d_name[0] != '.')
 		{
 			sprintf(problem,"%s/%s",location,dent->d_name);
-			makeProblem(home,repoID,problem,dent->d_name,"./repomock");
+			makeProblem(home,repoName,problem,dent->d_name,repoAddr);
 		}
 	closedir(workbookDir);
 
-	userLogout(home);
+//	userLogout(home);
 
 	return 0;
 

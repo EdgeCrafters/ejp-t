@@ -19,8 +19,15 @@ int parseOpt(int argc, char *argv[], const char targetOpt[], const int optNum,\
 			}
 
 	for(int i = 0; i<optNum; ++i)
-		if(flags[i]){
-			continue;
+		if(flags[i] && caches[i]){
+			int cache;
+			if((cache = open(caches[i], O_WRONLY|O_CREAT|O_TRUNC,S_IRWXO|S_IRWXU)) < 0)
+				goto cacheException;
+			else if(write(cache,optArg[i],strlen(optArg)) < 0){
+				close(cache);
+				goto cacheException;
+			}
+			close (cache);
 		}else if(caches[i]){
 			int cache;char buf[BUFSIZE];
 			if((cache = open(caches[i], O_RDONLY)) < 0 
@@ -28,13 +35,19 @@ int parseOpt(int argc, char *argv[], const char targetOpt[], const int optNum,\
 				goto exception;
 
 			strcpy(optArg[i],buf);
-		}else
+		}else if(flags[i])
+			continue;
+		else
 			goto exception;
 
 	return result;
 	
 exception:
 	fprintf(stderr,"Missing options require %d, receive %d\n", optNum, result);
+	exit(EXIT_FAILURE);
+
+cacheException:
+	fprintf(stderr,"Wrong with cache\n");
 	exit(EXIT_FAILURE);
 }
 

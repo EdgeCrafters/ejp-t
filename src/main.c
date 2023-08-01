@@ -13,7 +13,7 @@ int main(int argc, char*argv[])
 	}
 
 	if(!strncmp(command,"workbook",8)){
-		printf("workbook : ");
+		fprintf(stderr, "workbook : ");
 		return workbook(argc,argv);
 	}else if(!strncmp(command,"repo",4)){
 		printf("repo : ");

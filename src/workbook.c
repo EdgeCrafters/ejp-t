@@ -75,8 +75,8 @@ exception:
 //delete an additional testcase in repo
 static int delete(int argc, char*argv[])
 {
-	char hvalue[VALUESIZE] , lvalue[VALUESIZE], nvalue[VALUESIZE];
-	char *values[] = {hvalue,lvalue,nvalue};
+	char home[VALUESIZE] , location[VALUESIZE], repoName[VALUESIZE];
+	char *values[] = {home,location,repoName};
 	char *cache[] = {homeCache, problemLocationCache, NULL};
 	
 	printf("delete : ");
@@ -91,15 +91,28 @@ static int delete(int argc, char*argv[])
 //append an additional testcase in repo
 static int append(int argc, char*argv[])
 {
-	char hvalue[VALUESIZE] , lvalue[VALUESIZE], nvalue[VALUESIZE];
-	char *values[] = {hvalue,lvalue,nvalue};
+	char home[VALUESIZE] , location[VALUESIZE], repoName[VALUESIZE];
+	char *values[] = {home,location,repoName};
 	char *cache[] = {homeCache, problemLocationCache, NULL};
 	
-	printf("append : ");
+	fprintf(stderr,"append : ");
 	if(parseOpt(argc,argv,"h:l:n:",3,values,cache)<3){
 		fprintf(stderr,"Missing opts...\n");
 		exit(EXIT_FAILURE);
 	}
+	
+	char *problemName, *buf, *_location;
+	_location = strdup(location);
+	buf = strtok(_location,"/");
+	while(buf  != NULL){
+		problemName = strdup(buf);
+		buf = strtok(NULL, "/");
+	}
+	fprintf(stderr,"location : %s\n",location);
+	char repoAddr[URLSIZE]; sprintf(repoAddr,"%s/%s/%s",repos,home,repoName);
+	makeProblem(home, repoName, location, problemName, repoAddr);
+
+	free(_location);free(problemName);
 
 	return 0;
 }
@@ -107,8 +120,8 @@ static int append(int argc, char*argv[])
 //update an exsiting testcase in repo
 static int update(int argc, char*argv[])
 {
-	char hvalue[VALUESIZE] , lvalue[VALUESIZE], nvalue[VALUESIZE];
-	char *values[] = {hvalue,lvalue,nvalue};
+	char home[VALUESIZE] , location[VALUESIZE], repoName[VALUESIZE];
+	char *values[] = {home,location,repoName};
 	char *cache[] = {homeCache, problemLocationCache, NULL};
 	
 	printf("update : ");
@@ -187,7 +200,7 @@ int workbook
 			fprintf(stderr,"error...\n");
 			exit(-1);
 		}
-	}else if(!strncmp(command,"append",3)){
+	}else if(!strncmp(command,"append",6)){
 		if(append(argc,argv)){
 			fprintf(stderr,"error...\n");
 			exit(-1);

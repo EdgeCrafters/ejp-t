@@ -103,13 +103,14 @@ static int removeProblem(char home[], char repoName[], char problemName[])
 		sprintf(error,"repoInfo");
 		goto exception;
 	}
+	
+	char cmd[CMDSIZE];sprintf(cmd,"rm -rf %s",problemInfo.localPath);
+	system(cmd);
 
-	remove(problemInfo.localPath);
-
-	if(deleteProblem(home,problemInfo.id)<0){
-		fprintf(stderr,"Fail to delete problem %s ...\n",problemInfo.title);
-		exit(EXIT_FAILURE);
-	}
+//	if(deleteProblem(home,problemInfo.id)<0){
+//		fprintf(stderr,"Fail to delete problem %s ...\n",problemInfo.title);
+//		exit(EXIT_FAILURE);
+//	}
 
 	return 0;
 
@@ -139,16 +140,16 @@ static int makeProblem(char home[], char repoName[], char problemDir[],
 		goto exception;
 	}
 
-	char buffer[BUFSIZE]; int problemId;
-	if(uploadProblem(home,repoInfo.id,title,description,buffer)<0){
-		fprintf(stderr,"Fail to upload problem %s ...\n",title);
-		exit(EXIT_FAILURE);
-	}
-	cJSON *response = cJSON_Parse(buffer);
-	problemId = cJSON_GetObjectItem(response,"id")->valueint;
+//	char buffer[BUFSIZE]; int problemId;
+//	if(uploadProblem(home,repoInfo.id,title,description,buffer)<0){
+//		fprintf(stderr,"Fail to upload problem %s ...\n",title);
+//		exit(EXIT_FAILURE);
+//	}
+//	cJSON *response = cJSON_Parse(buffer);
+//	problemId = cJSON_GetObjectItem(response,"id")->valueint;
 
 	struct info problemInfo = {.title = strdup(title), .description = strdup(description),
-		.remoteAddr = "", .id = problemId};
+		.remoteAddr = "", .id = 130};
 	if(setInfo(home, repoName, problemName, &problemInfo) < 0){
 		sprintf(error,"Info");
 		goto exception;

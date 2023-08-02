@@ -31,7 +31,7 @@ static int getInfo(char home[], char repoName[], char problemName[], struct info
 	info->description = description ? strdup(description->valuestring) : NULL;
 	info->localPath = strdup(path);
 	info->remoteAddr = remoteAddr ? strdup(remoteAddr->valuestring):NULL;
-	info->id = id ? id->valueint : -1;
+	info->id = id ? strdup(id->valuestring) : NULL;
 
 	return 0;
 
@@ -78,9 +78,9 @@ static int setInfo(char home[], char repoName[], char problemName[], struct info
 	cJSON_AddItemToObject(result,"remoteAddr",bufjson);
 	
 	if(!(id = cJSON_GetObjectItem(root,"id")) && info->id >= 0)
-		bufjson = cJSON_CreateNumber(info->id);
+		bufjson = cJSON_CreateString(info->id);
 	else
-		bufjson = cJSON_CreateNumber(id->valueint);
+		bufjson = cJSON_CreateString(id->valuestring);
 	cJSON_AddItemToObject(result,"id",bufjson);
 
 	char *resultstr = cJSON_Print(result);
@@ -107,10 +107,10 @@ static int removeProblem(char home[], char repoName[], char problemName[])
 	char cmd[CMDSIZE];sprintf(cmd,"rm -rf %s",problemInfo.localPath);
 	system(cmd);
 
-//	if(deleteProblem(home,problemInfo.id)<0){
-//		fprintf(stderr,"Fail to delete problem %s ...\n",problemInfo.title);
-//		exit(EXIT_FAILURE);
-//	}
+	if(deleteProblem(home,problemInfo.id)<0){
+		fprintf(stderr,"Fail to delete problem %s ...\n",problemInfo.title);
+		exit(EXIT_FAILURE);
+	}
 
 	return 0;
 
@@ -130,9 +130,11 @@ static int makeProblem(char home[], char repoName[], char problemDir[],
 
 	char resultDir[URLSIZE];
 	sprintf(resultDir,"%s/%s",result, problemName);
+	fprintf(stderr,"resultDir : %s\n",resultDir);
 	char title[STRSIZE], description[STRSIZE], biases[BUFSIZE];
 	if(encode(resultDir,problemDir, biases, title, description) < 0)
 		goto exception;
+	//git upload testcases...
 
 	struct info repoInfo;
 	if(getInfo(home, repoName, NULL, &repoInfo) < 0){
@@ -140,16 +142,16 @@ static int makeProblem(char home[], char repoName[], char problemDir[],
 		goto exception;
 	}
 
-//	char buffer[BUFSIZE]; int problemId;
-//	if(uploadProblem(home,repoInfo.id,title,description,buffer)<0){
-//		fprintf(stderr,"Fail to upload problem %s ...\n",title);
-//		exit(EXIT_FAILURE);
-//	}
-//	cJSON *response = cJSON_Parse(buffer);
-//	problemId = cJSON_GetObjectItem(response,"id")->valueint;
+	char buffer[BUFSIZE];
+	if(uploadProblem(home,repoInfo.id,title,description,buffer)<0){
+		exit(EXIT_FAILURE);
+	}
+	cJSON *response = cJSON_Parse(buffer);
+	cJSON *id = cJSON_GetObjectItem(response,"id");
+	char problemId[IDSIZE]; sprintf(problemId,"%d",id->valueint);
 
 	struct info problemInfo = {.title = strdup(title), .description = strdup(description),
-		.remoteAddr = "", .id = 130};
+		.remoteAddr = "", .id = strdup(problemId)};
 	if(setInfo(home, repoName, problemName, &problemInfo) < 0){
 		sprintf(error,"Info");
 		goto exception;
@@ -176,7 +178,11 @@ static int delete(int argc, char*argv[])
 		exit(EXIT_FAILURE);
 	}
 
+	userLogin(home);
+
 	removeProblem(home, repoName, problemName);
+
+	userLogout(home);
 
 	return 0;
 }
@@ -194,6 +200,8 @@ static int append(int argc, char*argv[])
 		exit(EXIT_FAILURE);
 	}
 	
+	userLogin(home);
+
 	char *problemName, *buf, *_location;
 	_location = strdup(location);
 	buf = strtok(_location,"/");
@@ -203,8 +211,9 @@ static int append(int argc, char*argv[])
 	}
 	char repoAddr[URLSIZE]; sprintf(repoAddr,"%s/%s/%s",repos,home,repoName);
 	makeProblem(home, repoName, location, problemName, repoAddr);
-
 	free(_location);free(problemName);
+
+	userLogout(home);
 
 	return 0;
 }
@@ -251,7 +260,7 @@ static int create(int argc, char*argv[])
 	if(mkdir(repoAddr, S_IRWXU|S_IRWXO)<0 && errno != EEXIST)
 		goto exception;
 
-//	userLogin(home);
+	userLogin(home);
 
 
 // ******** git clone & store repo info in cache ************//
@@ -277,7 +286,7 @@ static int create(int argc, char*argv[])
 		}
 	closedir(workbookDir);
 
-//	userLogout(home);
+	userLogout(home);
 
 	return 0;
 

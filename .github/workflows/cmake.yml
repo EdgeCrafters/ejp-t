@@ -23,10 +23,16 @@ jobs:
     - name: Build Environment
       # Build your program with the given configuration
       run: cmake -E make_directory build
+      
+    - name: Install ninja-build tool
+      uses: seanmiddleditch/gha-setup-ninja@v3
+      
+    - name: Install Clang
+      uses: egor-tensin/setup-clang@v1.4
 
     - name: Build
       working-directory: ${{github.workspace}}/build
       # Execute tests defined by the CMake configuration.
       # See https://cmake.org/cmake/help/latest/manual/ctest.1.html for more detail
-      run:  cmake .. && cmake --build . --config release --parallel 9 --clean-first
+      run:  cmake -DCMAKE_C_COMPILER=clang -GNinja .. && cmake --build . --config release --parallel 9 --clean-first
 

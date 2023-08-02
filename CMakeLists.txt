@@ -1,4 +1,4 @@
-cmake_minimum_required(VERSION 3.11)
+cmake_minimum_required(VERSION 3.12)
 
 project(
 	EJS-T
@@ -23,6 +23,10 @@ FetchContent_MakeAvailable(libcurl)
 
 add_subdirectory(lib)
 add_subdirectory(src)
+add_subdirectory(test)
+
+include(CTest)
+add_test(test-0 test/test-main)
 
 file(COPY ${CMAKE_CURRENT_SOURCE_DIR}/workbook0/ DESTINATION ${CMAKE_CURRENT_BINARY_DIR}/workbook0/)
 file(COPY ${CMAKE_CURRENT_SOURCE_DIR}/.ejs/ DESTINATION ${CMAKE_CURRENT_BINARY_DIR}/.ejs/)

@@ -133,10 +133,14 @@ static int update(int argc, char*argv[])
 	return 0;
 }
 
-//create new workbook in repo
-// h for home address(http) l for location of resources n for name of repo
+// create new workbook in repo
+// *	description
+//		create new repo and workbook in it with login and logout
+// *	required options
+//		h for home address(http) l for location of resources n for name of repo
 static int create(int argc, char*argv[])
 {
+	//parsing options
 	printf("create : ");
 	char home[VALUESIZE] , location[VALUESIZE], repoName[VALUESIZE];
 	char *values[] = {home,location,repoName};
@@ -146,6 +150,8 @@ static int create(int argc, char*argv[])
 		exit(EXIT_FAILURE);
 	}
 	
+	//arrange home and repo directory
+	//>>> todo : apply git
 	char homeAddr[URLSIZE]; sprintf(homeAddr,"%s/%s",repos,home);
 	if(mkdir(homeAddr, S_IRWXU|S_IRWXO)<0 && errno != EEXIST)
 		goto exception;
@@ -155,6 +161,7 @@ static int create(int argc, char*argv[])
 
 //	userLogin(home);
 
+
 // ******** git clone & store repo info in cache ************//
 //	char repoAddress[BUFSIZE];
 //	if(initRepo(home,repoName,repoAddress,BUFSIZE)<0){
@@ -163,6 +170,8 @@ static int create(int argc, char*argv[])
 //	}else
 //		fprintf(stdout,"Init repo (repo address : %s)\n",repoAddress);
 	
+  // open and read a directory to upload
+	// search problems and upload them seperately 
 	DIR *workbookDir;
 	if((workbookDir = opendir(location)) == NULL)
 		goto exception;
@@ -185,6 +194,9 @@ exception:
 	exit(EXIT_FAILURE);
 }
 
+//workbook module wrapper
+// *	description
+//		parsing arguments and call a corresponding function
 int workbook
 (int argc, char*argv[])
 {

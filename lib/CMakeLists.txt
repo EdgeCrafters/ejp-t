@@ -1,4 +1,4 @@
-project(EJS-T_UTIL)
+project(EJS-T-UTIL)
 
 add_library(parse STATIC parse.c)
 add_library(sha256 STATIC sha256.c)

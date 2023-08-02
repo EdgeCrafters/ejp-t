@@ -24,8 +24,9 @@
 #define PWSIZE 16 
 #define MAXOPT 16
 
-struct repoInfo{
-	char *name;
+struct info{
+	char *title;
+	char *description;
 	char *localPath;
 	char *remoteAddr;
 	int id;

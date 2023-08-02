@@ -106,7 +106,7 @@ int encode(char resultPath[], char inputPath[], char biases[], char title[], cha
 
 		char inputFilePath[BUFSIZE], resultFilePath[BUFSIZE];
 		sprintf(inputFilePath,"%s/%s.json",inputPath,filename);
-		sprintf(resultFilePath,"%s/%s.result.json",resultPath,filename);
+		sprintf(resultFilePath,"%s/%s.json",resultPath,filename);
 
 		int resultFile, inputFile;
 		if((resultFile = open(resultFilePath, O_WRONLY|O_CREAT|O_TRUNC,S_IRWXO|S_IRWXU)) <0 

@@ -14,7 +14,7 @@
 
 #define STRSIZE 1048576
 
-#define BUFSIZE 1024 
+#define BUFSIZE 4096
 #define CMDSIZE 512
 #define URLSIZE 512
 
@@ -24,11 +24,12 @@
 #define PWSIZE 16 
 #define MAXOPT 16
 
-struct repoInfo{
-	char *name;
+struct info{
+	char *title;
+	char *description;
 	char *localPath;
 	char *remoteAddr;
-	int id;
+	char *id;
 };
 
 int parseOpt(int argc,char *argv[],const char targetOpt[],const int optNum,char *optArg[],char *caches[]);

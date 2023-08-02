@@ -5,65 +5,112 @@ const char problemLocationCache[] = "./.ejs/cache/problemLocation.txt";
 const char wbLocationCache[] = "./.ejs/cache/wbLocation.txt";
 const char repos[] = "./.ejs/repos";
 
-static int findRepo(char home[], char repoName[], struct repoInfo *info)
+static int getInfo(char home[], char repoName[], char problemName[], struct info *info)
 {
-	char repoPath[URLSIZE];sprintf(repoPath,"%s/%s/%s",repos,home,repoName);
-	DIR *repoDir;
-	if((repoDir = opendir(repoPath))==NULL)
+	char path[URLSIZE];
+	if(!problemName)
+		sprintf(path,"%s/%s/%s",repos,home,repoName);
+	else
+		sprintf(path,"%s/%s/%s/%s",repos,home,repoName,problemName);
+
+	char infoPath[URLSIZE];sprintf(infoPath,"%s/info.json",path);
+	int infoFile; char buf[BUFSIZE];
+	if((infoFile = open(infoPath,O_RDONLY))<0
+			|| read(infoFile, buf, BUFSIZE)<0)
 		goto exception;
-	
-	struct dirent *dent;
-	while((dent = readdir(repoDir))){
-		if(dent->d_type != DT_REG || strncmp(dent->d_name,"info",4))	
-			continue;
-		
-		char infoPath[URLSIZE];sprintf(infoPath,"%s/%s",repoPath,dent->d_name);
-		int infoFile; char buf[BUFSIZE];
-		if((infoFile = open(infoPath,O_RDONLY))<0
-				|| read(infoFile, buf, BUFSIZE)<0)
-			goto exception;
-		cJSON *root = cJSON_Parse(buf);
-		cJSON *remoteAddrjson = cJSON_GetObjectItem(root,"remoteAddr");
-		cJSON *idjson = cJSON_GetObjectItem(root,"id");
-		if(!remoteAddrjson || !idjson)
-			goto exception;
+	close(infoFile);
 
-		info->name = strdup(repoName);
-		info->localPath = strdup(repoPath);
-		info->remoteAddr = strdup(remoteAddrjson->valuestring);
-		info->id = atoi(idjson->valuestring);
+	cJSON *root, *title, *description, *remoteAddr, *id;
+	root = cJSON_Parse(buf);
+	title = cJSON_GetObjectItem(root,"title");
+	description = cJSON_GetObjectItem(root,"description");
+	remoteAddr = cJSON_GetObjectItem(root,"remoteAddr");
+	id = cJSON_GetObjectItem(root,"id");
 
-		return 0;
-	}
+	info->title = title ? strdup(title->valuestring) : NULL;
+	info->description = description ? strdup(description->valuestring) : NULL;
+	info->localPath = strdup(path);
+	info->remoteAddr = remoteAddr ? strdup(remoteAddr->valuestring):NULL;
+	info->id = id ? strdup(id->valuestring) : NULL;
+
+	return 0;
 
 exception:
 	return -1;
 }
 
-static int makeProblem(char home[], char repoName[], char problemDir[], char problem[], char result[])
+static int setInfo(char home[], char repoName[], char problemName[], struct info *info)
+{
+	char path[URLSIZE];
+	if(!problemName)
+		sprintf(path,"%s/%s/%s",repos,home,repoName);
+	else
+		sprintf(path,"%s/%s/%s/%s",repos,home,repoName,problemName);
+
+	char infoPath[URLSIZE];sprintf(infoPath,"%s/info.json",path);
+	int infoFile; char buf[BUFSIZE];
+	if((infoFile = open(infoPath,O_RDONLY))<0
+			|| read(infoFile, buf, BUFSIZE)<0)
+		goto exception;
+	close(infoFile);
+
+	cJSON *root, *title, *description, *remoteAddr, *id;
+	root = cJSON_Parse(buf);
+
+	cJSON *result = cJSON_CreateObject(), *bufjson;
+
+	if(!(title = cJSON_GetObjectItem(root,"title")) && info->title)
+		bufjson = cJSON_CreateString(info->title);
+	else
+		bufjson = cJSON_CreateString(title->valuestring);
+	cJSON_AddItemToObject(result,"title",bufjson);
+
+	if(!(description = cJSON_GetObjectItem(root,"description")) && info->description)
+		bufjson = cJSON_CreateString(info->description);
+	else
+		bufjson = cJSON_CreateString(description->valuestring);
+	cJSON_AddItemToObject(result,"description",bufjson);
+
+	if(!(remoteAddr = cJSON_GetObjectItem(root,"remoteAddr")) && info->remoteAddr)
+		bufjson = cJSON_CreateString(info->remoteAddr);
+	else
+		bufjson = cJSON_CreateString(remoteAddr->valuestring);
+	cJSON_AddItemToObject(result,"remoteAddr",bufjson);
+	
+	if(!(id = cJSON_GetObjectItem(root,"id")) && info->id >= 0)
+		bufjson = cJSON_CreateString(info->id);
+	else
+		bufjson = cJSON_CreateString(id->valuestring);
+	cJSON_AddItemToObject(result,"id",bufjson);
+
+	char *resultstr = cJSON_Print(result);
+	if((infoFile = open(infoPath,O_WRONLY|O_TRUNC))<0 
+			|| write(infoFile, resultstr,strlen(resultstr)) == 0)
+		goto exception;
+
+	return 0;
+
+exception:
+	return -1;
+}
+
+static int removeProblem(char home[], char repoName[], char problemName[])
 {
 	char error[STRSIZE];
-	if(mkdir(result, S_IRWXU|S_IRWXO)<0 && errno != EEXIST){
-		sprintf(error,"mkdir %d ", errno);
-		goto exception;
-	}
-
-	char resultDir[URLSIZE];
-	sprintf(resultDir,"%s/%s",result, problem);
-	char title[STRSIZE], description[STRSIZE], biases[BUFSIZE];
-	if(encode(resultDir,problemDir, biases, title, description) < 0)
-		goto exception;
-
-	struct repoInfo info;
-	if(findRepo(home, repoName, &info) < 0){
+	
+	struct info problemInfo;
+	if(getInfo(home, repoName, problemName, &problemInfo) < 0){
 		sprintf(error,"repoInfo");
 		goto exception;
 	}
+	
+	char cmd[CMDSIZE];sprintf(cmd,"rm -rf %s",problemInfo.localPath);
+	system(cmd);
 
-//	if(uploadProblem(home,info.id,title,description)<0){
-//		fprintf(stderr,"Fail to upload problem %s ...\n",title);
-//		exit(EXIT_FAILURE);
-//	}
+	if(deleteProblem(home,problemInfo.id)<0){
+		fprintf(stderr,"Fail to delete problem %s ...\n",problemInfo.title);
+		exit(EXIT_FAILURE);
+	}
 
 	return 0;
 
@@ -72,18 +119,70 @@ exception:
 	exit(EXIT_FAILURE);
 }
 
+static int makeProblem(char home[], char repoName[], char problemDir[],
+		char problemName[], char result[])
+{
+	char error[STRSIZE];
+	if(mkdir(result, S_IRWXU|S_IRWXO)<0 && errno != EEXIST){
+		sprintf(error,"mkdir %d ", errno);
+		goto exception;
+	}
+
+	char resultDir[URLSIZE];
+	sprintf(resultDir,"%s/%s",result, problemName);
+	fprintf(stderr,"resultDir : %s\n",resultDir);
+	char title[STRSIZE], description[STRSIZE], biases[BUFSIZE];
+	if(encode(resultDir,problemDir, biases, title, description) < 0)
+		goto exception;
+	//git upload testcases...
+
+	struct info repoInfo;
+	if(getInfo(home, repoName, NULL, &repoInfo) < 0){
+		sprintf(error,"Info");
+		goto exception;
+	}
+
+	char buffer[BUFSIZE];
+	if(uploadProblem(home,repoInfo.id,title,description,buffer)<0){
+		exit(EXIT_FAILURE);
+	}
+	cJSON *response = cJSON_Parse(buffer);
+	cJSON *id = cJSON_GetObjectItem(response,"id");
+	char problemId[IDSIZE]; sprintf(problemId,"%d",id->valueint);
+
+	struct info problemInfo = {.title = strdup(title), .description = strdup(description),
+		.remoteAddr = "", .id = strdup(problemId)};
+	if(setInfo(home, repoName, problemName, &problemInfo) < 0){
+		sprintf(error,"Info");
+		goto exception;
+	}
+
+	return 0;
+
+exception:
+	fprintf(stderr, "%s error...\n",error);
+	exit(EXIT_FAILURE);
+}
+	
+
 //delete an additional testcase in repo
 static int delete(int argc, char*argv[])
 {
-	char home[VALUESIZE] , location[VALUESIZE], repoName[VALUESIZE];
-	char *values[] = {home,location,repoName};
-	char *cache[] = {homeCache, problemLocationCache, NULL};
+	char home[VALUESIZE] , problemName[VALUESIZE], repoName[VALUESIZE];
+	char *values[] = {home,problemName,repoName};
+	char *cache[] = {homeCache,NULL,NULL};
 	
-	printf("delete : ");
-	if(parseOpt(argc,argv,"h:l:n:",3,values,cache)<3){
+	fprintf(stderr,"delete : ");
+	if(parseOpt(argc,argv,"h:p:n:",3,values,cache)<3){
 		fprintf(stderr,"Missing opts...\n");
 		exit(EXIT_FAILURE);
 	}
+
+	userLogin(home);
+
+	removeProblem(home, repoName, problemName);
+
+	userLogout(home);
 
 	return 0;
 }
@@ -101,6 +200,8 @@ static int append(int argc, char*argv[])
 		exit(EXIT_FAILURE);
 	}
 	
+	userLogin(home);
+
 	char *problemName, *buf, *_location;
 	_location = strdup(location);
 	buf = strtok(_location,"/");
@@ -108,11 +209,11 @@ static int append(int argc, char*argv[])
 		problemName = strdup(buf);
 		buf = strtok(NULL, "/");
 	}
-	fprintf(stderr,"location : %s\n",location);
 	char repoAddr[URLSIZE]; sprintf(repoAddr,"%s/%s/%s",repos,home,repoName);
 	makeProblem(home, repoName, location, problemName, repoAddr);
-
 	free(_location);free(problemName);
+
+	userLogout(home);
 
 	return 0;
 }
@@ -159,7 +260,7 @@ static int create(int argc, char*argv[])
 	if(mkdir(repoAddr, S_IRWXU|S_IRWXO)<0 && errno != EEXIST)
 		goto exception;
 
-//	userLogin(home);
+	userLogin(home);
 
 
 // ******** git clone & store repo info in cache ************//
@@ -185,7 +286,7 @@ static int create(int argc, char*argv[])
 		}
 	closedir(workbookDir);
 
-//	userLogout(home);
+	userLogout(home);
 
 	return 0;
 

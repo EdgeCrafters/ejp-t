@@ -1,9 +1,10 @@
 #include "../includes/common.h" 
 
-const char homeCache[] = "./.ejs/cache/home.txt";
-const char problemLocationCache[] = "./.ejs/cache/problemLocation.txt";
-const char wbLocationCache[] = "./.ejs/cache/wbLocation.txt";
-const char repos[] = "./.ejs/repos";
+char exe[PATHSIZE];
+char homeCache[PATHSIZE];
+char problemLocationCache[PATHSIZE];
+char wbLocationCache[PATHSIZE];
+char repos[PATHSIZE];
 
 static int getInfo(char home[], char repoName[], char problemName[], struct info *info)
 {
@@ -131,7 +132,9 @@ static int makeProblem(char home[], char repoName[], char problemDir[],
 	char resultDir[URLSIZE];
 	sprintf(resultDir,"%s/%s",result, problemName);
 	fprintf(stderr,"resultDir : %s\n",resultDir);
-	char title[STRSIZE], description[STRSIZE], biases[BUFSIZE];
+
+	char title[STRSIZE], description[STRSIZE];
+	struct tcInfo biases[BUFSIZE];
 	if(encode(resultDir,problemDir, biases, title, description) < 0)
 		goto exception;
 	//git upload testcases...
@@ -225,8 +228,8 @@ static int update(int argc, char*argv[])
 	char *values[] = {home,location,repoName};
 	char *cache[] = {homeCache, problemLocationCache, NULL};
 	
-	printf("update : ");
-	if(parseOpt(argc,argv,"h:l:n:",3,values,cache)<3){
+	fprintf(stderr,"update : ");
+	if(parseOpt(argc,argv,"h:p:n:",3,values,cache)<3){
 		fprintf(stderr,"Missing opts...\n");
 		exit(EXIT_FAILURE);
 	}
@@ -242,7 +245,7 @@ static int update(int argc, char*argv[])
 static int create(int argc, char*argv[])
 {
 	//parsing options
-	printf("create : ");
+	fprintf(stderr,"create : ");
 	char home[VALUESIZE] , location[VALUESIZE], repoName[VALUESIZE];
 	char *values[] = {home,location,repoName};
 	char *cache[] = {homeCache, wbLocationCache, NULL};
@@ -306,6 +309,18 @@ int workbook
 		fprintf(stderr,"no command ...\n");
 		workbookInfo();
 		exit(-1);
+	}
+
+	if(getExecutablePath(exe)<0){
+		fprintf(stderr,"cannot configure current path ...\n");
+		workbookInfo();
+		exit(-1);
+	}else{
+		sprintf(homeCache,"%s/../.ejs/cache/home.txt",exe);
+		sprintf(problemLocationCache,"%s/../.ejs/cache/problemLocation.txt",exe);
+		sprintf(wbLocationCache,"%s/../.ejs/cache/wbLocation.txt",exe);
+		sprintf(repos,"%s/../.ejs/repos",exe);
+		fprintf(stderr,"p %s l %s\n",problemLocationCache,wbLocationCache);
 	}
 
 	if(!strncmp(command,"create",6)){

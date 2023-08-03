@@ -82,3 +82,19 @@ char* getExtension(char *target)
 		;
 	return target+i;
 }
+
+int getExecutablePath(char path[]) {
+    if (!path) 
+			goto exception;
+
+		char buf[PATHSIZE];
+		ssize_t len = readlink("/proc/self/exe", buf, PATH_MAX);
+		if (len != -1) {
+				buf[len] = '\0';
+				strcpy(path,dirname(buf));
+				return 0;
+		}
+
+exception:
+    return -1;
+}

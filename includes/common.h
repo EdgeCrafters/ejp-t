@@ -41,8 +41,16 @@ struct info{
 	char *id;
 };
 
+extern char exe[PATHSIZE];
+extern char homeCache[PATHSIZE];
+extern char problemLocationCache[PATHSIZE];
+extern char wbLocationCache[PATHSIZE];
+extern char repos[PATHSIZE];
+
 int parseOpt(int argc,char *argv[],const char targetOpt[],const int optNum,char *optArg[],char *caches[]);
 void userLogin(const char home[]);
 void userLogout(const char home[]);
 char* getExtension(char *target);
 int getExecutablePath(char path[]);
+int setInfo(char home[], char repoName[], char problemName[], struct info *info);
+int getInfo(char home[], char repoName[], char problemName[], struct info *info);

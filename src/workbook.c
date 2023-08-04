@@ -6,95 +6,6 @@ char problemLocationCache[PATHSIZE];
 char wbLocationCache[PATHSIZE];
 char repos[PATHSIZE];
 
-static int getInfo(char home[], char repoName[], char problemName[], struct info *info)
-{
-	char path[URLSIZE];
-	if(!problemName)
-		sprintf(path,"%s/%s/%s",repos,home,repoName);
-	else
-		sprintf(path,"%s/%s/%s/%s",repos,home,repoName,problemName);
-
-	char infoPath[URLSIZE];sprintf(infoPath,"%s/info.json",path);
-	int infoFile; char buf[BUFSIZE];
-	if((infoFile = open(infoPath,O_RDONLY))<0
-			|| read(infoFile, buf, BUFSIZE)<0)
-		goto exception;
-	close(infoFile);
-
-	cJSON *root, *title, *description, *remoteAddr, *id;
-	root = cJSON_Parse(buf);
-	title = cJSON_GetObjectItem(root,"title");
-	description = cJSON_GetObjectItem(root,"description");
-	remoteAddr = cJSON_GetObjectItem(root,"remoteAddr");
-	id = cJSON_GetObjectItem(root,"id");
-
-	info->title = title ? strdup(title->valuestring) : NULL;
-	info->description = description ? strdup(description->valuestring) : NULL;
-	info->localPath = strdup(path);
-	info->remoteAddr = remoteAddr ? strdup(remoteAddr->valuestring):NULL;
-	info->id = id ? strdup(id->valuestring) : NULL;
-
-	return 0;
-
-exception:
-	return -1;
-}
-
-static int setInfo(char home[], char repoName[], char problemName[], struct info *info)
-{
-	char path[URLSIZE];
-	if(!problemName)
-		sprintf(path,"%s/%s/%s",repos,home,repoName);
-	else
-		sprintf(path,"%s/%s/%s/%s",repos,home,repoName,problemName);
-
-	char infoPath[URLSIZE];sprintf(infoPath,"%s/info.json",path);
-	int infoFile; char buf[BUFSIZE];
-	if((infoFile = open(infoPath,O_RDONLY))<0
-			|| read(infoFile, buf, BUFSIZE)<0)
-		goto exception;
-	close(infoFile);
-
-	cJSON *root, *title, *description, *remoteAddr, *id;
-	root = cJSON_Parse(buf);
-
-	cJSON *result = cJSON_CreateObject(), *bufjson;
-
-	if(!(title = cJSON_GetObjectItem(root,"title")) && info->title)
-		bufjson = cJSON_CreateString(info->title);
-	else
-		bufjson = cJSON_CreateString(title->valuestring);
-	cJSON_AddItemToObject(result,"title",bufjson);
-
-	if(!(description = cJSON_GetObjectItem(root,"description")) && info->description)
-		bufjson = cJSON_CreateString(info->description);
-	else
-		bufjson = cJSON_CreateString(description->valuestring);
-	cJSON_AddItemToObject(result,"description",bufjson);
-
-	if(!(remoteAddr = cJSON_GetObjectItem(root,"remoteAddr")) && info->remoteAddr)
-		bufjson = cJSON_CreateString(info->remoteAddr);
-	else
-		bufjson = cJSON_CreateString(remoteAddr->valuestring);
-	cJSON_AddItemToObject(result,"remoteAddr",bufjson);
-	
-	if(!(id = cJSON_GetObjectItem(root,"id")) && info->id >= 0)
-		bufjson = cJSON_CreateString(info->id);
-	else
-		bufjson = cJSON_CreateString(id->valuestring);
-	cJSON_AddItemToObject(result,"id",bufjson);
-
-	char *resultstr = cJSON_Print(result);
-	if((infoFile = open(infoPath,O_WRONLY|O_TRUNC))<0 
-			|| write(infoFile, resultstr,strlen(resultstr)) == 0)
-		goto exception;
-
-	return 0;
-
-exception:
-	return -1;
-}
-
 static int removeProblem(char home[], char repoName[], char problemName[])
 {
 	char error[STRSIZE];
@@ -120,10 +31,40 @@ exception:
 	exit(EXIT_FAILURE);
 }
 
+static int updateProblem(char home[], char repoName[], char problemDir[],
+		char problemName[])
+{
+	char error[STRSIZE];
+
+	struct info problemInfo;
+	if(getInfo(home, repoName, problemName, &problemInfo) < 0){
+		sprintf(error,"Info");
+		goto exception;
+	}
+
+	char *resultDir = strdup(problemInfo.localPath);
+	char title[STRSIZE], description[STRSIZE];
+	struct tcInfo biases[BUFSIZE];
+	if(encode(resultDir,problemDir, biases, title, description) < 0)
+		goto exception;
+	//git upload testcases...
+
+	if(updateProblem(home,problemInfo.id,title,description)<0){
+		exit(EXIT_FAILURE);
+	}
+
+	return 0;
+
+exception:
+	fprintf(stderr, "%s error...\n",error);
+	exit(EXIT_FAILURE);
+}
+
 static int makeProblem(char home[], char repoName[], char problemDir[],
 		char problemName[], char result[])
 {
 	char error[STRSIZE];
+
 	if(mkdir(result, S_IRWXU|S_IRWXO)<0 && errno != EEXIST){
 		sprintf(error,"mkdir %d ", errno);
 		goto exception;
@@ -233,6 +174,12 @@ static int update(int argc, char*argv[])
 		fprintf(stderr,"Missing opts...\n");
 		exit(EXIT_FAILURE);
 	}
+
+	userLogin(home);
+
+	
+
+	userLogout(home);
 
 	return 0;
 }

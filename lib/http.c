@@ -245,14 +245,21 @@ int updateProblem(const char home[],const char problemID[],char title[],char des
 		curl_easy_setopt(curl, CURLOPT_URL, url);
 		curl_easy_setopt(curl, CURLOPT_PORT, 4000L);
 
-		curl_easy_setopt(curl, CURLOPT_CUSTOMREQUEST, "DELETE");
+		curl_easy_setopt(curl, CURLOPT_CUSTOMREQUEST, "PATCH");
 		curl_easy_setopt(curl, CURLOPT_CONNECTTIMEOUT, 5L);
 
 		list = curl_slist_append(list,cookie);
 		list = curl_slist_append(list, "Content-Type: application/json");
 		curl_easy_setopt(curl, CURLOPT_HTTPHEADER, list);
 
-		sprintf(payload,"{\"title\": \"%s\",\"text\":\"%s\"}",title,description);
+		if(title[0] && description[0])
+			sprintf(payload,"{\"title\": \"%s\",\"text\":\"%s\"}",title,description);
+		else if(title[0] && !description[0])
+			sprintf(payload,"{\"title\": \"%s\"}",title);
+		else if(!title[0] && description[0])
+			sprintf(payload,"{\"text\":\"%s\"}",description);
+		else
+			sprintf(payload,"");
 		curl_easy_setopt(curl, CURLOPT_POSTFIELDS,payload);
 		
 		writeidx = 0;

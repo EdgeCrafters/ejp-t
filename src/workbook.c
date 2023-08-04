@@ -31,11 +31,10 @@ exception:
 	exit(EXIT_FAILURE);
 }
 
-static int updateProblem(char home[], char repoName[], char problemDir[],
-		char problemName[])
+static int updateProblem(char home[],char repoName[],char problemDir[],char problemName[])
 {
 	char error[STRSIZE];
-
+	
 	struct info problemInfo;
 	if(getInfo(home, repoName, problemName, &problemInfo) < 0){
 		sprintf(error,"Info");
@@ -43,15 +42,15 @@ static int updateProblem(char home[], char repoName[], char problemDir[],
 	}
 
 	char *resultDir = strdup(problemInfo.localPath);
-	char title[STRSIZE], description[STRSIZE];
+	char title[STRSIZE] = {'\0'}, description[STRSIZE] = {'\0'};
 	struct tcInfo biases[BUFSIZE];
 	if(encode(resultDir,problemDir, biases, title, description) < 0)
 		goto exception;
 	//git upload testcases...
-
-	if(updateProblem(home,problemInfo.id,title,description)<0){
-		exit(EXIT_FAILURE);
-	}
+	
+//	if(updateProblem(home,problemInfo.id,title,description)<0){
+//		exit(EXIT_FAILURE);
+//	}
 
 	return 0;
 
@@ -60,8 +59,7 @@ exception:
 	exit(EXIT_FAILURE);
 }
 
-static int makeProblem(char home[], char repoName[], char problemDir[],
-		char problemName[], char result[])
+static int makeProblem(char home[],char repoName[],char problemDir[],char problemName[],char result[])
 {
 	char error[STRSIZE];
 
@@ -86,16 +84,16 @@ static int makeProblem(char home[], char repoName[], char problemDir[],
 		goto exception;
 	}
 
-	char buffer[BUFSIZE];
-	if(uploadProblem(home,repoInfo.id,title,description,buffer)<0){
-		exit(EXIT_FAILURE);
-	}
-	cJSON *response = cJSON_Parse(buffer);
-	cJSON *id = cJSON_GetObjectItem(response,"id");
-	char problemId[IDSIZE]; sprintf(problemId,"%d",id->valueint);
+//	char buffer[BUFSIZE];
+//	if(uploadProblem(home,repoInfo.id,title,description,buffer)<0){
+//		exit(EXIT_FAILURE);
+//	}
+//	cJSON *response = cJSON_Parse(buffer);
+//	cJSON *id = cJSON_GetObjectItem(response,"id");
+//	char problemId[IDSIZE]; sprintf(problemId,"%d",id->valueint);
 
 	struct info problemInfo = {.title = strdup(title), .description = strdup(description),
-		.remoteAddr = "", .id = strdup(problemId)};
+		.remoteAddr = "", .id = "1"};//strdup(problemId)};
 	if(setInfo(home, repoName, problemName, &problemInfo) < 0){
 		sprintf(error,"Info");
 		goto exception;
@@ -117,7 +115,7 @@ static int delete(int argc, char*argv[])
 	char *cache[] = {homeCache,NULL,NULL};
 	
 	fprintf(stderr,"delete : ");
-	if(parseOpt(argc,argv,"h:p:n:",3,values,cache)<3){
+	if(parseOpt(argc,argv,"h:p:r:",3,values,cache)<3){
 		fprintf(stderr,"Missing opts...\n");
 		exit(EXIT_FAILURE);
 	}
@@ -139,7 +137,7 @@ static int append(int argc, char*argv[])
 	char *cache[] = {homeCache, problemLocationCache, NULL};
 	
 	fprintf(stderr,"append : ");
-	if(parseOpt(argc,argv,"h:l:n:",3,values,cache)<3){
+	if(parseOpt(argc,argv,"h:l:r:",3,values,cache)<3){
 		fprintf(stderr,"Missing opts...\n");
 		exit(EXIT_FAILURE);
 	}
@@ -165,21 +163,21 @@ static int append(int argc, char*argv[])
 //update an exsiting testcase in repo
 static int update(int argc, char*argv[])
 {
-	char home[VALUESIZE] , location[VALUESIZE], repoName[VALUESIZE];
-	char *values[] = {home,location,repoName};
-	char *cache[] = {homeCache, problemLocationCache, NULL};
+	char home[VALUESIZE] , location[VALUESIZE], repoName[VALUESIZE], problemName[VALUESIZE];
+	char *values[] = {home,location,repoName,problemName};
+	char *cache[] = {homeCache, problemLocationCache, NULL, NULL};
 	
 	fprintf(stderr,"update : ");
-	if(parseOpt(argc,argv,"h:p:n:",3,values,cache)<3){
+	if(parseOpt(argc,argv,"h:l:r:p:",4,values,cache)<4){
 		fprintf(stderr,"Missing opts...\n");
 		exit(EXIT_FAILURE);
 	}
 
-	userLogin(home);
+	//userLogin(home);
 
-	
+	updateProblem(home,repoName,location,problemName);
 
-	userLogout(home);
+	//userLogout(home);
 
 	return 0;
 }
@@ -188,7 +186,7 @@ static int update(int argc, char*argv[])
 // *	description
 //		create new repo and workbook in it with login and logout
 // *	required options
-//		h for home address(http) l for location of resources n for name of repo
+//		h for home address(http) l for location of resources r for name of repo
 static int create(int argc, char*argv[])
 {
 	//parsing options
@@ -196,7 +194,7 @@ static int create(int argc, char*argv[])
 	char home[VALUESIZE] , location[VALUESIZE], repoName[VALUESIZE];
 	char *values[] = {home,location,repoName};
 	char *cache[] = {homeCache, wbLocationCache, NULL};
-	if(parseOpt(argc,argv,"h:l:n:",3,values,cache)<3){
+	if(parseOpt(argc,argv,"h:l:r:",3,values,cache)<3){
 		fprintf(stderr,"Missing opts...\n");
 		exit(EXIT_FAILURE);
 	}
@@ -210,7 +208,7 @@ static int create(int argc, char*argv[])
 	if(mkdir(repoAddr, S_IRWXU|S_IRWXO)<0 && errno != EEXIST)
 		goto exception;
 
-	userLogin(home);
+	//userLogin(home);
 
 
 // ******** git clone & store repo info in cache ************//
@@ -236,7 +234,7 @@ static int create(int argc, char*argv[])
 		}
 	closedir(workbookDir);
 
-	userLogout(home);
+	//userLogout(home);
 
 	return 0;
 

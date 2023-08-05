@@ -6,7 +6,7 @@ char problemLocationCache[PATHSIZE];
 char wbLocationCache[PATHSIZE];
 char repos[PATHSIZE];
 
-static int removeProblem(char home[], char repoName[], char problemName[])
+static int deleteProblem(char home[], char repoName[], char problemName[])
 {
 	char error[STRSIZE];
 	
@@ -20,7 +20,7 @@ static int removeProblem(char home[], char repoName[], char problemName[])
 	char cmd[CMDSIZE];sprintf(cmd,"rm -rf %s",problemInfo.localPath);
 	system(cmd);
 
-	if(deleteProblem(home,problemInfo.id)<0){
+	if(deleteProblemHTTP(home,problemInfo.id)<0){
 		fprintf(stderr,"Fail to delete problem %s ...\n",problemInfo.title);
 		exit(EXIT_FAILURE);
 	}
@@ -95,7 +95,7 @@ static int makeProblem(char home[],char repoName[],char problemDir[],char proble
 	}
 
 	char buffer[BUFSIZE];
-	if(uploadProblem(home,repoInfo.id,title,description,buffer)<0){
+	if(createProblemHTTP(home,repoInfo.id,title,description,buffer)<0){
 		exit(EXIT_FAILURE);
 	}
 	cJSON *response = cJSON_Parse(buffer);
@@ -132,7 +132,7 @@ static int delete(int argc, char*argv[])
 
 	userLogin(home);
 
-	removeProblem(home, repoName, problemName);
+	deleteProblem(home, repoName, problemName);
 
 	userLogout(home);
 

@@ -25,7 +25,7 @@ size_t storeCookie(char *buffer, size_t size, size_t nitems, void *userdata)
 	return nitems * size;
 }
 
-int login(const char home[], const char id[], const char pw[])
+int loginHTTP(const char home[], const char id[], const char pw[])
 {
 	char url[URLSIZE], payload[URLSIZE];
 	CURL *curl;
@@ -75,7 +75,7 @@ int login(const char home[], const char id[], const char pw[])
 	return 0;
 }
 
-int logout(const char home[])
+int logoutHTTP(const char home[])
 {
 	char url[URLSIZE],cookie[BUFSIZE];
 	CURL *curl;
@@ -123,7 +123,7 @@ int logout(const char home[])
 	return 0;
 }
 
-int initRepo(const char home[], const char repoName[], char buffer[], size_t bufSize)
+int initRepoHTTP(const char home[], const char repoName[], char buffer[], size_t bufSize)
 {
 	char url[URLSIZE],cookie[BUFSIZE];
 	CURL *curl;
@@ -173,7 +173,7 @@ int initRepo(const char home[], const char repoName[], char buffer[], size_t buf
 	return 0;
 }
 
-int uploadProblem(const char home[],const char repoID[],char title[],char description[],char buffer[])
+int createProblemHTTP(const char home[],const char repoID[],char title[],char description[],char buffer[])
 {
 	char url[URLSIZE],cookie[BUFSIZE],payload[STRSIZE];
 	CURL *curl;
@@ -284,7 +284,7 @@ int updateProblemHTTP(const char home[],const char problemID[],char title[],char
 	return 0;
 }
 
-int deleteProblem(const char home[],const char problemID[])
+int deleteProblemHTTP(const char home[],const char problemID[])
 {
 	char url[URLSIZE],cookie[BUFSIZE],payload[STRSIZE];
 	CURL *curl;

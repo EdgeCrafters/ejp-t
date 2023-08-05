@@ -62,7 +62,7 @@ void userLogin(const char home[])
  	printf("Enter %s PW :", home);
  	scanf("%s", userPW);
 
-	if(!login(home, userID,userPW)){
+	if(!loginHTTP(home, userID,userPW)){
 		fprintf(stdout,"Login Success!\n");
 	}else{
 		fprintf(stdout,"Try again");
@@ -72,7 +72,7 @@ void userLogin(const char home[])
 
 void userLogout(const char home[])
 {
-	logout(home);
+	logoutHTTP(home);
 }
 
 char* getExtension(char *target)

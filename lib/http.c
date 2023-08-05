@@ -225,7 +225,7 @@ int uploadProblem(const char home[],const char repoID[],char title[],char descri
 	return 0;
 }
 
-int updateProblem(const char home[],const char problemID[],char title[],char description[])
+int updateProblemHTTP(const char home[],const char problemID[],char title[],char description[])
 {
 	char url[URLSIZE],cookie[BUFSIZE],payload[STRSIZE];
 	CURL *curl;
@@ -272,7 +272,7 @@ int updateProblem(const char home[],const char problemID[],char title[],char des
 			return -1;
 
 		curl_easy_getinfo(curl, CURLINFO_HTTP_CODE, &stat);
-		if(stat != 201)
+		if(stat != 200)
 			return -1;
 
 		curl_easy_cleanup(curl);
@@ -284,7 +284,7 @@ int updateProblem(const char home[],const char problemID[],char title[],char des
 	return 0;
 }
 
-int deleteProblem(const char home[],const int problemID)
+int deleteProblem(const char home[],const char problemID[])
 {
 	char url[URLSIZE],cookie[BUFSIZE],payload[STRSIZE];
 	CURL *curl;
@@ -293,7 +293,7 @@ int deleteProblem(const char home[],const int problemID)
 	long stat;
 
 	memset(url,0,URLSIZE);
-	sprintf(url,"%s/problem/%d",home,problemID);
+	sprintf(url,"%s/problem/%s",home,problemID);
 
 	memset(cookie,0,BUFSIZE);
 	sprintf(cookie,"Cookie: %s",session.data);
@@ -311,7 +311,6 @@ int deleteProblem(const char home[],const int problemID)
 		list = curl_slist_append(list, "Content-Type: application/json");
 		curl_easy_setopt(curl, CURLOPT_HTTPHEADER, list);
 
-		curl_easy_setopt(curl, CURLOPT_POSTFIELDS,"");
 
 		writeidx = 0;
 		curl_easy_setopt(curl, CURLOPT_WRITEDATA, NULL);

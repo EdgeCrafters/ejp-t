@@ -16,6 +16,7 @@ static int removeProblem(char home[], char repoName[], char problemName[])
 		goto exception;
 	}
 	
+	fprintf(stderr,"delete path : %s\n", problemInfo.localPath);
 	char cmd[CMDSIZE];sprintf(cmd,"rm -rf %s",problemInfo.localPath);
 	system(cmd);
 
@@ -46,11 +47,20 @@ static int updateProblem(char home[],char repoName[],char problemDir[],char prob
 	struct tcInfo biases[BUFSIZE];
 	if(encode(resultDir,problemDir, biases, title, description) < 0)
 		goto exception;
-	//git upload testcases...
 	
-//	if(updateProblem(home,problemInfo.id,title,description)<0){
-//		exit(EXIT_FAILURE);
-//	}
+	if(title[0])
+		problemInfo.title = strdup(title);
+	if(description[0])
+	 	problemInfo.description = strdup(description);
+	
+	if(setInfo(home, repoName, problemName, &problemInfo) < 0){
+		sprintf(error,"Info");
+		goto exception;
+	}
+	//git upload testcases...
+	if(updateProblemHTTP(home,problemInfo.id,title,description)<0){
+		exit(EXIT_FAILURE);
+	}
 
 	return 0;
 
@@ -84,16 +94,16 @@ static int makeProblem(char home[],char repoName[],char problemDir[],char proble
 		goto exception;
 	}
 
-//	char buffer[BUFSIZE];
-//	if(uploadProblem(home,repoInfo.id,title,description,buffer)<0){
-//		exit(EXIT_FAILURE);
-//	}
-//	cJSON *response = cJSON_Parse(buffer);
-//	cJSON *id = cJSON_GetObjectItem(response,"id");
-//	char problemId[IDSIZE]; sprintf(problemId,"%d",id->valueint);
+	char buffer[BUFSIZE];
+	if(uploadProblem(home,repoInfo.id,title,description,buffer)<0){
+		exit(EXIT_FAILURE);
+	}
+	cJSON *response = cJSON_Parse(buffer);
+	cJSON *id = cJSON_GetObjectItem(response,"id");
+	char problemId[IDSIZE]; sprintf(problemId,"%d",id->valueint);
 
 	struct info problemInfo = {.title = strdup(title), .description = strdup(description),
-		.remoteAddr = "", .id = "1"};//strdup(problemId)};
+		.remoteAddr = "", .id = strdup(problemId)};//strdup(problemId)};
 	if(setInfo(home, repoName, problemName, &problemInfo) < 0){
 		sprintf(error,"Info");
 		goto exception;
@@ -173,11 +183,11 @@ static int update(int argc, char*argv[])
 		exit(EXIT_FAILURE);
 	}
 
-	//userLogin(home);
+	userLogin(home);
 
 	updateProblem(home,repoName,location,problemName);
 
-	//userLogout(home);
+	userLogout(home);
 
 	return 0;
 }
@@ -208,18 +218,16 @@ static int create(int argc, char*argv[])
 	if(mkdir(repoAddr, S_IRWXU|S_IRWXO)<0 && errno != EEXIST)
 		goto exception;
 
-	//userLogin(home);
+	userLogin(home);
 
-
-// ******** git clone & store repo info in cache ************//
-//	char repoAddress[BUFSIZE];
-//	if(initRepo(home,repoName,repoAddress,BUFSIZE)<0){
-//		fprintf(stderr,"Fail to init repo ...\n");
-//		exit(EXIT_FAILURE);
-//	}else
-//		fprintf(stdout,"Init repo (repo address : %s)\n",repoAddress);
+	// char repoAddress[BUFSIZE];
+	// if(initRepo(home,repoName,repoAddress,BUFSIZE)<0){
+	// 	fprintf(stderr,"Fail to init repo ...\n");
+	// 	exit(EXIT_FAILURE);
+	// }else
+	// 	fprintf(stdout,"Init repo (repo address : %s)\n",repoAddress);
 	
-  // open and read a directory to upload
+  	// open and read a directory to upload 
 	// search problems and upload them seperately 
 	DIR *workbookDir;
 	if((workbookDir = opendir(location)) == NULL)
@@ -234,7 +242,7 @@ static int create(int argc, char*argv[])
 		}
 	closedir(workbookDir);
 
-	//userLogout(home);
+	userLogout(home);
 
 	return 0;
 

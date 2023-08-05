@@ -76,7 +76,8 @@ exception:
 	return -1;
 }
 
-int encode(char resultPath[], char inputPath[], char biases[], char title[], char description[])
+int encode(char resultPath[], char inputPath[],
+		struct tcInfo biases[], char title[], char description[])
 {
 	char error[STRSIZE];
 
@@ -111,7 +112,7 @@ int encode(char resultPath[], char inputPath[], char biases[], char title[], cha
 		int resultFile, inputFile;
 		if((resultFile = open(resultFilePath, O_WRONLY|O_CREAT|O_TRUNC,S_IRWXO|S_IRWXU)) <0 
 				|| (inputFile = open(inputFilePath, O_RDONLY)) < 0){
-			sprintf(error,"open result %d %s input %d %s", resultFile,resultFilePath, inputFile, inputFilePath);
+			sprintf(error,"open file");
 			goto exception;
 		}
 
@@ -129,7 +130,9 @@ int encode(char resultPath[], char inputPath[], char biases[], char title[], cha
 		}
 		
 		static char bias; static int biasIdx = 0;
-		biases[biasIdx++] = (bias = rand()%256);
+		biases[biasIdx].name = strdup(filename);
+		biases[biasIdx].localPath = strdup(resultFilePath);
+		biases[biasIdx++].bias = (bias = rand()%256);
 		cnvtTC(resultFile, inputStr, STRSIZE, bias);
 
 		close(inputFile);

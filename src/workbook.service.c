@@ -1,5 +1,38 @@
 #include "../includes/common.h"
 
+int initRepo(const char home[], const char repoName[])
+{
+    char repoId[BUFSIZE];
+    if (initRepoHTTP(home, repoName, repoId, BUFSIZE) < 0)
+    {
+        fprintf(stderr, "Fail to init repo ...\n");
+        exit(EXIT_FAILURE);
+    }
+    else
+        fprintf(stdout, "Init repo (repo address : %d)\n", atoi(repoId));
+
+    // int fd;
+    // char path[PATHSIZE];sprintf(path,"%s/%s/%s",repos,home,repoName);
+    // if ((fd = open(path, O_CREAT | O_WRONLY | O_TRUNC, S_IRUSR | S_IWUSR))<0)
+    //     goto exception;
+    // close(fd);
+
+    struct info repoInfo;
+    repoInfo.title = strdup(repoName);
+    repoInfo.id = atoi(repoId);
+    // repoInfo.localPath = strdup(path);
+    char address[PATHSIZE]; sprintf(address,"git@%s:%s",home,repoName);
+    repoInfo.remoteAddr = strdup(address);
+
+    if (setInfo(home, repoName, NULL, &repoInfo) < 0)
+        goto exception;
+
+    return 0;
+
+exception:
+    return -1;
+}
+
 int deleteProblem(char home[], char repoName[], char problemName[])
 {
     char error[STRSIZE];

@@ -3,6 +3,19 @@
 struct cookie session = {.isStore = 0};
 unsigned int writeidx;
 
+static size_t getRepoId(void *data, size_t size, size_t nmemb, void *clientp)
+{
+	if (clientp)
+	{
+		cJSON *root = cJSON_Parse(data);
+		fprintf(stderr, "received : %d\n", root);
+		cJSON *repoId = cJSON_GetObjectItem(root,"repoId");
+		sprintf((char *)clientp + writeidx, "%d", repoId->valueint);
+		writeidx += nmemb;
+	}
+	return size * nmemb;
+}
+
 static size_t plainWrite(void *data, size_t size, size_t nmemb, void *clientp)
 {
 	if(clientp){
@@ -153,7 +166,7 @@ int initRepoHTTP(const char home[], const char repoName[], char buffer[], size_t
 		
 		writeidx = 0;
 		curl_easy_setopt(curl, CURLOPT_WRITEDATA, (void*)buffer);
-		curl_easy_setopt(curl, CURLOPT_WRITEFUNCTION, plainWrite);
+		curl_easy_setopt(curl, CURLOPT_WRITEFUNCTION, getRepoId);
 
 		res = curl_easy_perform(curl);
 

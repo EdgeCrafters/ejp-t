@@ -9,9 +9,10 @@ char repos[PATHSIZE];
 int deleteProblem(char home[], char repoName[], char problemName[]);
 int updateProblem(char home[], char repoName[], char problemDir[], char problemName[]);
 int makeProblem(char home[], char repoName[], char problemDir[], char problemName[], char result[]);
+int initRepo(const char home[], const char repoName[]);
 
-//delete an additional testcase in repo
-static int delete(int argc, char*argv[])
+// delete an additional testcase in repo
+static int delete(int argc, char *argv[])
 {
 	char home[VALUESIZE] , problemName[VALUESIZE], repoName[VALUESIZE];
 	char *values[] = {home,problemName,repoName};
@@ -111,12 +112,7 @@ static int create(int argc, char*argv[])
 
 	userLogin(home);
 
-	char repoId[BUFSIZE];
-	if(initRepoHTTP(home,repoName,repoId,BUFSIZE)<0){
-		fprintf(stderr,"Fail to init repo ...\n");
-		exit(EXIT_FAILURE);
-	}else
-		fprintf(stdout,"Init repo (repo address : %s)\n",repoId);
+	fprintf(stderr,"result : %d",initRepo(home,repoName));
 	
   	// // open and read a directory to upload 
 	// // search problems and upload them seperately 

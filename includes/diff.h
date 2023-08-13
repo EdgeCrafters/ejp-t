@@ -1,3 +1,4 @@
 #pragma once
 #include "common.h"
-int diff(char*, char*, int);
+
+int init(char home[], char repoName[], char path[]);

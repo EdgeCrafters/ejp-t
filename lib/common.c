@@ -145,40 +145,47 @@ int setInfo(char home[], char repoName[], char problemName[], struct info *info)
 	int infoFile; char buf[BUFSIZE];
 	if((infoFile = open(infoPath,O_RDONLY))<0
 			|| read(infoFile, buf, BUFSIZE)<0)
-		goto exception;
-	close(infoFile);
+		close(infoFile);
 
-	cJSON *root, *title, *description, *remoteAddr, *id;
+	cJSON *root = NULL, *title = NULL, *description = NULL, *remoteAddr = NULL, *id = NULL;
 	root = cJSON_Parse(buf);
 
 	cJSON *result = cJSON_CreateObject(), *bufjson;
 
 	if(!(title = cJSON_GetObjectItem(root,"title")) && info->title)
 		bufjson = cJSON_CreateString(info->title);
-	else
+	else if(title != NULL)
 		bufjson = cJSON_CreateString(title->valuestring);
+	else
+		bufjson = cJSON_CreateString("");
 	cJSON_AddItemToObject(result,"title",bufjson);
 
 	if(!(description = cJSON_GetObjectItem(root,"description")) && info->description)
 		bufjson = cJSON_CreateString(info->description);
-	else
+	else if (description != NULL)
 		bufjson = cJSON_CreateString(description->valuestring);
+	else
+		bufjson = cJSON_CreateString("");
 	cJSON_AddItemToObject(result,"description",bufjson);
 
 	if(!(remoteAddr = cJSON_GetObjectItem(root,"remoteAddr")) && info->remoteAddr)
 		bufjson = cJSON_CreateString(info->remoteAddr);
-	else
+	else if (remoteAddr != NULL)
 		bufjson = cJSON_CreateString(remoteAddr->valuestring);
+	else
+		bufjson = cJSON_CreateString("");
 	cJSON_AddItemToObject(result,"remoteAddr",bufjson);
 	
 	if(!(id = cJSON_GetObjectItem(root,"id")) && info->id >= 0)
 		bufjson = cJSON_CreateString(info->id);
-	else
+	else if (id != NULL)
 		bufjson = cJSON_CreateString(id->valuestring);
+	else
+		bufjson = cJSON_CreateString("");
 	cJSON_AddItemToObject(result,"id",bufjson);
 
 	char *resultstr = cJSON_Print(result);
-	if((infoFile = open(infoPath,O_WRONLY|O_TRUNC))<0 
+	if((infoFile = open(infoPath,O_WRONLY|O_TRUNC|O_CREAT,S_IRUSR|S_IWUSR))<0 
 			|| write(infoFile, resultstr,strlen(resultstr)) == 0)
 		goto exception;
 

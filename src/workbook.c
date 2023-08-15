@@ -1,4 +1,4 @@
-#include "../includes/common.h" 
+#include "common.h" 
 
 char exe[PATHSIZE];
 char homeCache[PATHSIZE];
@@ -106,9 +106,9 @@ static int create(int argc, char*argv[])
 	char homeAddr[URLSIZE]; sprintf(homeAddr,"%s/%s",repos,home);
 	if(mkdir(homeAddr, S_IRWXU|S_IRWXO)<0 && errno != EEXIST)
 		goto exception;
-	char repoAddr[URLSIZE]; sprintf(repoAddr,"%s/%s",homeAddr,repoName);
-	if(mkdir(repoAddr, S_IRWXU|S_IRWXO)<0 && errno != EEXIST)
-		goto exception;
+	// char repoAddr[URLSIZE]; sprintf(repoAddr,"%s/%s",homeAddr,repoName);
+	// if(mkdir(repoAddr, S_IRWXU|S_IRWXO)<0 && errno != EEXIST)
+	// 	goto exception;
 
 	userLogin(home);
 

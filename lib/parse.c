@@ -1,6 +1,4 @@
 #include "parse.h"
-#include "sha256.h"
-#include "cJSON.h"
 
 int cnvtInfo(int resultFile, char *inputContent, int inputSize, char title[], char description[])
 {

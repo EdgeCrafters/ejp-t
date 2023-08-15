@@ -1,4 +1,6 @@
-#include "../includes/common.h"
+#include "parse.h"
+#include "http.h"
+#include "common.h"
 
 int initRepo(const char home[], const char repoName[])
 {
@@ -11,11 +13,8 @@ int initRepo(const char home[], const char repoName[])
     else
         fprintf(stdout, "Init repo (repo address : %d)\n", atoi(repoId));
 
-    // int fd;
-    // char path[PATHSIZE];sprintf(path,"%s/%s/%s",repos,home,repoName);
-    // if ((fd = open(path, O_CREAT | O_WRONLY | O_TRUNC, S_IRUSR | S_IWUSR))<0)
-    //     goto exception;
-    // close(fd);
+    char path[PATHSIZE];sprintf(path,"%s/%s/%s",repos,home,repoName);
+    gitInit(home,repoName,path);
 
     struct info repoInfo;
     repoInfo.title = strdup(repoName);

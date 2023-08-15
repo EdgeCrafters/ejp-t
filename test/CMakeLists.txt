@@ -1,11 +1,4 @@
-cmake_minimum_required(VERSION 3.12)
-project(
-	EJS-T-UNIT-TEST
-	)
+add_executable(test-main main.c)
 
-include_directories(../lib)
-
-add_executable(test-main main.c )
-
-target_link_libraries( test-main PRIVATE parse sha256 diff http info cJSON common)
-target_compile_options( ejs-t PUBLIC -w)
+target_link_libraries( test-main parse sha256 git http info cJSON common)
+target_include_directories( test-main  PRIVATE ${CMAKE_SOURCE_DIR}/include)

@@ -1,4 +1,5 @@
-#pragma once
+#ifndef common__h
+#define common__h
 #include <sys/stat.h>
 #include <stddef.h>
 #include <stdio.h>
@@ -23,22 +24,24 @@
 
 #define VALUESIZE 32
 
-#define IDSIZE 16 
-#define PWSIZE 16 
+#define IDSIZE 16
+#define PWSIZE 16
 #define MAXOPT 16
 
-struct tcInfo{
-	char *name;
-	char *localPath;
-	char bias;
+struct tcInfo
+{
+    char *name;
+    char *localPath;
+    char bias;
 };
 
-struct info{
-	char *title;
-	char *description;
-	char *localPath;
-	char *remoteAddr;
-	char *id;
+struct info
+{
+    char *title;
+    char *description;
+    char *localPath;
+    char *remoteAddr;
+    char *id;
 };
 
 extern char exe[PATHSIZE];
@@ -47,10 +50,11 @@ extern char problemLocationCache[PATHSIZE];
 extern char wbLocationCache[PATHSIZE];
 extern char repos[PATHSIZE];
 
-int parseOpt(int argc,char *argv[],const char targetOpt[],const int optNum,char *optArg[],char *caches[]);
+int parseOpt(int argc, char *argv[], const char targetOpt[], const int optNum, char *optArg[], char *caches[]);
 void userLogin(const char home[]);
 void userLogout(const char home[]);
-char* getExtension(char *target);
+char *getExtension(char *target);
 int getExecutablePath(char path[]);
 int setInfo(char home[], char repoName[], char problemName[], struct info *info);
 int getInfo(char home[], char repoName[], char problemName[], struct info *info);
+#endif

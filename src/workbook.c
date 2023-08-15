@@ -1,4 +1,4 @@
-#include "../includes/common.h" 
+#include "common.h" 
 
 char exe[PATHSIZE];
 char homeCache[PATHSIZE];
@@ -6,119 +6,13 @@ char problemLocationCache[PATHSIZE];
 char wbLocationCache[PATHSIZE];
 char repos[PATHSIZE];
 
-static int deleteProblem(char home[], char repoName[], char problemName[])
-{
-	char error[STRSIZE];
-	
-	struct info problemInfo;
-	if(getInfo(home, repoName, problemName, &problemInfo) < 0){
-		sprintf(error,"repoInfo");
-		goto exception;
-	}
-	
-	fprintf(stderr,"delete path : %s\n", problemInfo.localPath);
-	char cmd[CMDSIZE];sprintf(cmd,"rm -rf %s",problemInfo.localPath);
-	system(cmd);
+int deleteProblem(char home[], char repoName[], char problemName[]);
+int updateProblem(char home[], char repoName[], char problemDir[], char problemName[]);
+int makeProblem(char home[], char repoName[], char problemDir[], char problemName[], char result[]);
+int initRepo(const char home[], const char repoName[]);
 
-	if(deleteProblemHTTP(home,problemInfo.id)<0){
-		fprintf(stderr,"Fail to delete problem %s ...\n",problemInfo.title);
-		exit(EXIT_FAILURE);
-	}
-
-	return 0;
-
-exception:
-	fprintf(stderr, "%s error...\n",error);
-	exit(EXIT_FAILURE);
-}
-
-static int updateProblem(char home[],char repoName[],char problemDir[],char problemName[])
-{
-	char error[STRSIZE];
-	
-	struct info problemInfo;
-	if(getInfo(home, repoName, problemName, &problemInfo) < 0){
-		sprintf(error,"Info");
-		goto exception;
-	}
-
-	char *resultDir = strdup(problemInfo.localPath);
-	char title[STRSIZE] = {'\0'}, description[STRSIZE] = {'\0'};
-	struct tcInfo biases[BUFSIZE];
-	if(encode(resultDir,problemDir, biases, title, description) < 0)
-		goto exception;
-	
-	if(title[0])
-		problemInfo.title = strdup(title);
-	if(description[0])
-	 	problemInfo.description = strdup(description);
-	
-	if(setInfo(home, repoName, problemName, &problemInfo) < 0){
-		sprintf(error,"Info");
-		goto exception;
-	}
-	//git upload testcases...
-	if(updateProblemHTTP(home,problemInfo.id,title,description)<0){
-		exit(EXIT_FAILURE);
-	}
-
-	return 0;
-
-exception:
-	fprintf(stderr, "%s error...\n",error);
-	exit(EXIT_FAILURE);
-}
-
-static int makeProblem(char home[],char repoName[],char problemDir[],char problemName[],char result[])
-{
-	char error[STRSIZE];
-
-	if(mkdir(result, S_IRWXU|S_IRWXO)<0 && errno != EEXIST){
-		sprintf(error,"mkdir %d ", errno);
-		goto exception;
-	}
-
-	char resultDir[URLSIZE];
-	sprintf(resultDir,"%s/%s",result, problemName);
-	fprintf(stderr,"resultDir : %s\n",resultDir);
-
-	char title[STRSIZE], description[STRSIZE];
-	struct tcInfo biases[BUFSIZE];
-	if(encode(resultDir,problemDir, biases, title, description) < 0)
-		goto exception;
-	//git upload testcases...
-
-	struct info repoInfo;
-	if(getInfo(home, repoName, NULL, &repoInfo) < 0){
-		sprintf(error,"Info");
-		goto exception;
-	}
-
-	char buffer[BUFSIZE];
-	if(createProblemHTTP(home,repoInfo.id,title,description,buffer)<0){
-		exit(EXIT_FAILURE);
-	}
-	cJSON *response = cJSON_Parse(buffer);
-	cJSON *id = cJSON_GetObjectItem(response,"id");
-	char problemId[IDSIZE]; sprintf(problemId,"%d",id->valueint);
-
-	struct info problemInfo = {.title = strdup(title), .description = strdup(description),
-		.remoteAddr = "", .id = strdup(problemId)};//strdup(problemId)};
-	if(setInfo(home, repoName, problemName, &problemInfo) < 0){
-		sprintf(error,"Info");
-		goto exception;
-	}
-
-	return 0;
-
-exception:
-	fprintf(stderr, "%s error...\n",error);
-	exit(EXIT_FAILURE);
-}
-	
-
-//delete an additional testcase in repo
-static int delete(int argc, char*argv[])
+// delete an additional testcase in repo
+static int delete(int argc, char *argv[])
 {
 	char home[VALUESIZE] , problemName[VALUESIZE], repoName[VALUESIZE];
 	char *values[] = {home,problemName,repoName};
@@ -209,40 +103,33 @@ static int create(int argc, char*argv[])
 		exit(EXIT_FAILURE);
 	}
 	
-	//arrange home and repo directory
-	//>>> todo : apply git
 	char homeAddr[URLSIZE]; sprintf(homeAddr,"%s/%s",repos,home);
 	if(mkdir(homeAddr, S_IRWXU|S_IRWXO)<0 && errno != EEXIST)
 		goto exception;
-	char repoAddr[URLSIZE]; sprintf(repoAddr,"%s/%s",homeAddr,repoName);
-	if(mkdir(repoAddr, S_IRWXU|S_IRWXO)<0 && errno != EEXIST)
-		goto exception;
+	// char repoAddr[URLSIZE]; sprintf(repoAddr,"%s/%s",homeAddr,repoName);
+	// if(mkdir(repoAddr, S_IRWXU|S_IRWXO)<0 && errno != EEXIST)
+	// 	goto exception;
 
 	userLogin(home);
 
-	// char repoAddress[BUFSIZE];
-	// if(initRepo(home,repoName,repoAddress,BUFSIZE)<0){
-	// 	fprintf(stderr,"Fail to init repo ...\n");
-	// 	exit(EXIT_FAILURE);
-	// }else
-	// 	fprintf(stdout,"Init repo (repo address : %s)\n",repoAddress);
+	fprintf(stderr,"result : %d",initRepo(home,repoName));
 	
-  	// open and read a directory to upload 
-	// search problems and upload them seperately 
-	DIR *workbookDir;
-	if((workbookDir = opendir(location)) == NULL)
-		goto exception;
-	char problem[URLSIZE];
-	struct dirent *dent;
-	while((dent = readdir(workbookDir)))
-		if(dent->d_type == DT_DIR && dent->d_name[0] != '.')
-		{
-			sprintf(problem,"%s/%s",location,dent->d_name);
-			makeProblem(home,repoName,problem,dent->d_name,repoAddr);
-		}
-	closedir(workbookDir);
+  	// // open and read a directory to upload 
+	// // search problems and upload them seperately 
+	// DIR *workbookDir;
+	// if((workbookDir = opendir(location)) == NULL)
+	// 	goto exception;
+	// char problem[URLSIZE];
+	// struct dirent *dent;
+	// while((dent = readdir(workbookDir)))
+	// 	if(dent->d_type == DT_DIR && dent->d_name[0] != '.')
+	// 	{
+	// 		sprintf(problem,"%s/%s",location,dent->d_name);
+	// 		makeProblem(home,repoName,problem,dent->d_name,repoAddr);
+	// 	}
+	// closedir(workbookDir);
 
-	userLogout(home);
+	// userLogout(home);
 
 	return 0;
 

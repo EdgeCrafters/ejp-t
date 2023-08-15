@@ -1,5 +1,6 @@
 #include "parse.h"
 #include "http.h"
+#include "git.h"
 #include "common.h"
 
 int initRepo(const char home[], const char repoName[])
@@ -14,7 +15,7 @@ int initRepo(const char home[], const char repoName[])
         fprintf(stdout, "Init repo (repo address : %d)\n", atoi(repoId));
 
     char path[PATHSIZE];sprintf(path,"%s/%s/%s",repos,home,repoName);
-    gitInit(home,repoName,path);
+    gitInit("gitolite",repoName,path);
 
     struct info repoInfo;
     repoInfo.title = strdup(repoName);

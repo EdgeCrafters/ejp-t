@@ -12,6 +12,9 @@ RUN apt-get clean && \
     && apt-get clean && \
     rm -rf /var/lib/apt/lists/*
 
+RUN rm -rf ~/.ssh \
+    && ssh-keygen -t rsa -f /root/.ssh/id_rsa -N ""
+
 # Set clang and clang++ as default compilers
 ENV CC=clang
 ENV CXX=clang++

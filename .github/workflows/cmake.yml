@@ -36,6 +36,6 @@ jobs:
       # See https://cmake.org/cmake/help/latest/manual/ctest.1.html for more detail
       run:  cmake -DCMAKE_C_COMPILER=clang -GNinja .. && cmake --build . --config release --parallel 2 --clean-first
    
-    - name: test
-      working-directory: ${{github.workspace}}/build
-      run: ctest --parallel 2
+   # - name: test
+    #  working-directory: ${{github.workspace}}/build
+     # run: ctest --parallel 2

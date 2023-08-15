@@ -24,6 +24,8 @@
         "*.rex": "rexx",
         "*.rexx": "rexx",
         "diff.h": "c",
-        "curl.h": "c"
+        "curl.h": "c",
+        "common.h": "c",
+        "http.h": "c"
     }
 }

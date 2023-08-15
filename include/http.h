@@ -1,6 +1,6 @@
 #ifndef http__h
 #define http__h
-#include <curl/curl.h>
+#include "curl/curl.h"
 #include "common.h"
 
 struct cookie

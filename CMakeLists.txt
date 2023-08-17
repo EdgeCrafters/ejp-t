@@ -3,12 +3,6 @@ project(MyGitProject)
 
 # Fetch libgit2
 include(FetchContent)
-FetchContent_Declare(
-  libgit2
-  GIT_REPOSITORY https://github.com/libgit2/libgit2.git
-  GIT_TAG v1.1.0 # Choose an appropriate version
-)
-FetchContent_MakeAvailable(libgit2)
 
 FetchContent_Declare(
 	libcurl

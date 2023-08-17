@@ -44,6 +44,13 @@ struct info
     char *id;
 };
 
+struct problemTestcase
+{
+    char **input;
+    char **output;
+    int num;
+};
+
 extern char exe[PATHSIZE];
 extern char homeCache[PATHSIZE];
 extern char problemLocationCache[PATHSIZE];

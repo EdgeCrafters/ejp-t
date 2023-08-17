@@ -27,7 +27,7 @@ exception:
 	return -1;
 }
 
-int cnvtTC(int resultFile, char *inputContent, int inputSize, char bias)
+int cnvtTC(char *inputContent, int inputSize, char bias, struct problemTestcase *testcases)
 {
 	cJSON *root = cJSON_Parse(inputContent);
 	cJSON *result = cJSON_CreateObject();
@@ -53,19 +53,23 @@ int cnvtTC(int resultFile, char *inputContent, int inputSize, char bias)
 		buffer[i] = c;
 	}
 
-	cJSON *_input = cJSON_CreateString(buffer);
-	if(!_input)
-		goto exception;
-	cJSON_AddItemToObject(result,"input",_input);
+	testcases->input[testcases->num] = strdup(buffer);
+	testcases->output[testcases->num] = strdup(SHA256(outputstr));
+	++(testcases->num);
 
-	cJSON *_output = cJSON_CreateString(SHA256(outputstr));
-	if(!_output)
-		goto exception;
-	cJSON_AddItemToObject(result,"output",_output);
+	// cJSON *_input = cJSON_CreateString(buffer);
+	// if(!_input)
+	// 	goto exception;
+	// cJSON_AddItemToObject(result,"input",_input);
+
+	// cJSON *_output = cJSON_CreateString(SHA256(outputstr));
+	// if(!_output)
+	// 	goto exception;
+	// cJSON_AddItemToObject(result,"output",_output);
 	
-	resultstr = cJSON_Print(result);
-	if(write(resultFile,resultstr,strlen(resultstr)) == 0)
-		goto exception;
+	// resultstr = cJSON_Print(result);
+	// if(write(resultFile,resultstr,strlen(resultstr)) == 0)
+	// 	goto exception;
 
 	return 0;
 	
@@ -75,7 +79,7 @@ exception:
 }
 
 int encode(char resultPath[], char inputPath[],
-		struct tcInfo biases[], char title[], char description[])
+		struct tcInfo biases[], char title[], char description[], struct problemTestcase *result)
 {
 	char error[STRSIZE];
 
@@ -91,6 +95,7 @@ int encode(char resultPath[], char inputPath[],
 		goto exception;
 	}
 
+	int cnt = 0; // count for testcase
 	srand(time(NULL));
 	struct dirent *dent;
 	while((dent = readdir(inputDir))){
@@ -107,9 +112,8 @@ int encode(char resultPath[], char inputPath[],
 		sprintf(inputFilePath,"%s/%s.json",inputPath,filename);
 		sprintf(resultFilePath,"%s/%s.json",resultPath,filename);
 
-		int resultFile, inputFile;
-		if((resultFile = open(resultFilePath, O_WRONLY|O_CREAT|O_TRUNC,S_IRWXO|S_IRWXU)) <0 
-				|| (inputFile = open(inputFilePath, O_RDONLY)) < 0){
+		int inputFile;
+		if((inputFile = open(inputFilePath, O_RDONLY)) < 0){
 			sprintf(error,"open file");
 			goto exception;
 		}
@@ -120,6 +124,9 @@ int encode(char resultPath[], char inputPath[],
 		fprintf(stdout,"converting %s to %s...\n",inputFilePath, resultFilePath);
 
 		if(!strncmp(filename,"info",4)){
+			int resultFile;
+			if((resultFile = open(resultFilePath, O_WRONLY|O_CREAT|O_TRUNC,S_IRWXO|S_IRWXU)) <0 )
+				goto exception;
 			cnvtInfo(resultFile, inputStr, STRSIZE, title, description);
 
 			close(inputFile);
@@ -131,10 +138,9 @@ int encode(char resultPath[], char inputPath[],
 		biases[biasIdx].name = strdup(filename);
 		biases[biasIdx].localPath = strdup(resultFilePath);
 		biases[biasIdx++].bias = (bias = rand()%256);
-		cnvtTC(resultFile, inputStr, STRSIZE, bias);
+		cnvtTC(inputStr, STRSIZE, bias, result);
 
 		close(inputFile);
-		close(resultFile);
 	}
 
 	closedir(inputDir);

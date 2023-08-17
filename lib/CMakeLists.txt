@@ -1,8 +1,3 @@
-add_library(git git.c)
-target_link_libraries(git git2)
-target_include_directories(git PUBLIC ${CMAKE_SOURCE_DIR}/include)
-target_include_directories(git PUBLIC ${libgit2_SOURCE_DIR}/include)
-
 add_library(cJSON cJSON.c)
 target_include_directories(cJSON PUBLIC ${CMAKE_SOURCE_DIR}/include)
 
@@ -10,7 +5,6 @@ target_include_directories(cJSON PUBLIC ${CMAKE_SOURCE_DIR}/include)
 add_library(http http.c)
 target_link_libraries(http libcurl)
 target_include_directories(http PUBLIC ${CMAKE_SOURCE_DIR}/include)
-target_include_directories(git PUBLIC ${libcurl_SOURCE_DIR}/include)
 
 add_library(common common.c)
 target_link_libraries(common http)

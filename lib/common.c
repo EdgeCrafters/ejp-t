@@ -149,6 +149,22 @@ exception:
     return -1;
 }
 
+static int overwrite(cJSON *dest, cJSON *src, const char property[], const char text[])
+{
+    if(text){
+        cJSON_AddItemToObject(dest, property, text);
+        return 0;
+    }
+
+    cJSON *value = NULL;
+    if(src && (value =  cJSON_GetObjectItem(src,property)))
+        cJSON_AddItemToObject(dest, property, value->valuestring);
+    else 
+        cJSON_AddItemToObject(dest, property, "");
+
+    return 0;
+}
+
 int setInfo(char home[], char repoName[], char problemName[], struct info *info)
 {
     char path[PATHSIZE];
@@ -167,44 +183,16 @@ int setInfo(char home[], char repoName[], char problemName[], struct info *info)
     else
         root = cJSON_Parse(buf);
 
-    cJSON *title = NULL, *description = NULL, *remoteAddr = NULL, *id = NULL;
+    cJSON *result = cJSON_CreateObject();
 
-    cJSON *result = cJSON_CreateObject(), *bufjson;
-
-    if (root && !(title = cJSON_GetObjectItem(root, "title")) && info->title)
-        bufjson = cJSON_CreateString(info->title);
-    else if (title != NULL)
-        bufjson = cJSON_CreateString(title->valuestring);
-    else
-        bufjson = cJSON_CreateString("");
-    cJSON_AddItemToObject(result, "title", bufjson);
-
-    if (root && !(description = cJSON_GetObjectItem(root, "description")) && info->description)
-        bufjson = cJSON_CreateString(info->description);
-    else if (description != NULL)
-        bufjson = cJSON_CreateString(description->valuestring);
-    else
-        bufjson = cJSON_CreateString("");
-    cJSON_AddItemToObject(result, "description", bufjson);
-
-    if (root && !(remoteAddr = cJSON_GetObjectItem(root, "remoteAddr")) && info->remoteAddr)
-        bufjson = cJSON_CreateString(info->remoteAddr);
-    else if (remoteAddr != NULL)
-        bufjson = cJSON_CreateString(remoteAddr->valuestring);
-    else
-        bufjson = cJSON_CreateString("");
-    cJSON_AddItemToObject(result, "remoteAddr", bufjson);
-
-    if (root && !(id = cJSON_GetObjectItem(root, "id")) && info->id >= 0)
-        bufjson = cJSON_CreateString(info->id);
-    else if (id != NULL)
-        bufjson = cJSON_CreateString(id->valuestring);
-    else
-        bufjson = cJSON_CreateString("");
-    cJSON_AddItemToObject(result, "id", bufjson);
+    overwrite(result,root,"title",info->title);
+    overwrite(result,root,"description",info->description);
+    overwrite(result,root,"remoteAddr",info->remoteAddr);
+    overwrite(result,root,"id",info->id);
 
     char *resultstr = cJSON_Print(result);
-    if ((infoFile = open(infoPath, O_WRONLY | O_TRUNC | O_CREAT, S_IRUSR | S_IWUSR)) < 0 || write(infoFile, resultstr, strlen(resultstr)) == 0)
+    if ((infoFile = open(infoPath, O_WRONLY | O_TRUNC | O_CREAT, S_IRUSR | S_IWUSR)) < 0 
+        || write(infoFile, resultstr, strlen(resultstr)) == 0)
         goto exception;
 
     return 0;

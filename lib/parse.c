@@ -27,7 +27,7 @@ exception:
 	return -1;
 }
 
-int cnvtTC(char *inputContent, int inputSize, char bias, struct problemTestcase *testcases)
+int cnvtTC(char *inputContent, int inputSize, struct problemTestcase *testcases)
 {
 	cJSON *root = cJSON_Parse(inputContent);
 	cJSON *result = cJSON_CreateObject();
@@ -39,37 +39,12 @@ int cnvtTC(char *inputContent, int inputSize, char bias, struct problemTestcase 
 	if(!inputjson || !outputjson)
 		goto exception;
 
-	char *inputstr, *outputstr, *resultstr, buffer[STRSIZE];
-	inputstr = inputjson->valuestring, outputstr = outputjson->valuestring, resultstr = NULL;
-	
-	for(int i = 0; inputstr[i] != '\0'; ++i){
- 		char c = inputstr[i];
- 
- 		if(c > 32){
- 			c += bias;
- 		}else if(c != ' ' && c != '\n')
-			goto exception;
- 		
-		buffer[i] = c;
-	}
+	char *inputstr, *outputstr;
+	inputstr = inputjson->valuestring, outputstr = outputjson->valuestring;
 
-	testcases->input[testcases->num] = strdup(buffer);
+	testcases->input[testcases->num] = strdup(inputstr);
 	testcases->output[testcases->num] = strdup(SHA256(outputstr));
 	++(testcases->num);
-
-	// cJSON *_input = cJSON_CreateString(buffer);
-	// if(!_input)
-	// 	goto exception;
-	// cJSON_AddItemToObject(result,"input",_input);
-
-	// cJSON *_output = cJSON_CreateString(SHA256(outputstr));
-	// if(!_output)
-	// 	goto exception;
-	// cJSON_AddItemToObject(result,"output",_output);
-	
-	// resultstr = cJSON_Print(result);
-	// if(write(resultFile,resultstr,strlen(resultstr)) == 0)
-	// 	goto exception;
 
 	return 0;
 	
@@ -137,8 +112,7 @@ int encode(char resultPath[], char inputPath[],
 		static char bias; static int biasIdx = 0;
 		biases[biasIdx].name = strdup(filename);
 		biases[biasIdx].localPath = strdup(resultFilePath);
-		biases[biasIdx++].bias = (bias = rand()%256);
-		cnvtTC(inputStr, STRSIZE, bias, result);
+		cnvtTC(inputStr, STRSIZE, result);
 
 		close(inputFile);
 	}

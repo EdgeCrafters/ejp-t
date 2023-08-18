@@ -13,9 +13,9 @@ int initRepo(const char home[], const char repoName[])
     else
         fprintf(stdout, "Init repo (repo address : %d)\n", atoi(repoId));
         
-    struct info repoInfo;
+    struct info repoInfo = {NULL};
     repoInfo.title = strdup(repoName);
-    repoInfo.id = atoi(repoId);
+    repoInfo.id = strdup(repoId);
     // repoInfo.localPath = strdup(path);
     char address[PATHSIZE]; sprintf(address,"git@%s:%s",home,repoName);
     repoInfo.remoteAddr = strdup(address);
@@ -131,6 +131,9 @@ int makeProblem(char home[], char repoName[], char problemDir[], char problemNam
         sprintf(error,"createProblemHTTP");
         goto exception;
     }
+
+    fprintf(stderr,"result : %s",buffer);
+
     cJSON *response = cJSON_Parse(buffer);
     cJSON *id = cJSON_GetObjectItem(response, "id");
     char problemId[IDSIZE];

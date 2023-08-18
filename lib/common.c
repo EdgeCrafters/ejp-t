@@ -152,15 +152,15 @@ exception:
 static int overwrite(cJSON *dest, cJSON *src, const char property[], const char text[])
 {
     if(text){
-        cJSON_AddItemToObject(dest, property, text);
+        cJSON_AddStringToObject(dest, property, text);
         return 0;
     }
 
     cJSON *value = NULL;
     if(src && (value =  cJSON_GetObjectItem(src,property)))
-        cJSON_AddItemToObject(dest, property, value->valuestring);
-    else 
-        cJSON_AddItemToObject(dest, property, "");
+        cJSON_AddStringToObject(dest, property, value->valuestring);
+    else
+        cJSON_AddStringToObject(dest, property, "");
 
     return 0;
 }
@@ -178,16 +178,15 @@ int setInfo(char home[], char repoName[], char problemName[], struct info *info)
     int infoFile;
     char buf[BUFSIZE];
     cJSON *root = NULL;
-    if ((infoFile = open(infoPath, O_RDONLY)) < 0 || read(infoFile, buf, BUFSIZE) < 0)
-        close(infoFile);
-    else
+    if ((infoFile = open(infoPath, O_RDONLY)) > 0 && read(infoFile, buf, BUFSIZE) > 0)
         root = cJSON_Parse(buf);
+    else
+        close(infoFile);
 
     cJSON *result = cJSON_CreateObject();
 
     overwrite(result,root,"title",info->title);
     overwrite(result,root,"description",info->description);
-    overwrite(result,root,"remoteAddr",info->remoteAddr);
     overwrite(result,root,"id",info->id);
 
     char *resultstr = cJSON_Print(result);

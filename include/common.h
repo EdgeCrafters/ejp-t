@@ -28,6 +28,8 @@
 #define PWSIZE 16
 #define MAXOPT 16
 
+#define MAXTC 100
+
 struct tcInfo
 {
     char *name;
@@ -46,8 +48,8 @@ struct info
 
 struct problemTestcase
 {
-    char **input;
-    char **output;
+    char *input[MAXTC];
+    char *output[MAXTC];
     int num;
 };
 

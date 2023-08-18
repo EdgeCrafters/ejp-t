@@ -29,6 +29,12 @@ exception:
 
 int cnvtTC(char *inputContent, int inputSize, struct problemTestcase *testcases)
 {
+	if(!testcases)
+		goto exception;
+	else if (testcases->num > MAXTC - 1)
+		return 0;
+	
+
 	cJSON *root = cJSON_Parse(inputContent);
 	cJSON *result = cJSON_CreateObject();
 	if(!root || !result)

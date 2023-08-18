@@ -112,24 +112,25 @@ static int create(int argc, char*argv[])
 
 	userLogin(home);
 
-	fprintf(stderr,"result : %d",initRepo(home,repoName));
+	if(initRepo(home,repoName)<0)
+		goto exception;
 	
-  	// // open and read a directory to upload 
-	// // search problems and upload them seperately 
-	// DIR *workbookDir;
-	// if((workbookDir = opendir(location)) == NULL)
-	// 	goto exception;
-	// char problem[URLSIZE];
-	// struct dirent *dent;
-	// while((dent = readdir(workbookDir)))
-	// 	if(dent->d_type == DT_DIR && dent->d_name[0] != '.')
-	// 	{
-	// 		sprintf(problem,"%s/%s",location,dent->d_name);
-	// 		makeProblem(home,repoName,problem,dent->d_name,repoAddr);
-	// 	}
-	// closedir(workbookDir);
+  	// open and read a directory to upload 
+	// search problems and upload them seperately 
+	DIR *workbookDir;
+	if((workbookDir = opendir(location)) == NULL)
+		goto exception;
+	char problem[URLSIZE];
+	struct dirent *dent;
+	while((dent = readdir(workbookDir)))
+		if(dent->d_type == DT_DIR && dent->d_name[0] != '.')
+		{
+			sprintf(problem,"%s/%s",location,dent->d_name);
+			makeProblem(home,repoName,problem,dent->d_name,repoAddr);
+		}
+	closedir(workbookDir);
 
-	// userLogout(home);
+	userLogout(home);
 
 	return 0;
 

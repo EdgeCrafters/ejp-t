@@ -3,7 +3,7 @@
   "dockerComposeFile": "../docker-compose.yml",
   "service": "app",
   "workspaceFolder": "/workspace",
-  "postCreateCommand":"chmod +x /workspace/scripts/setup.sh",
+  "postCreateCommand":"chmod +x /workspace/scripts/setup.sh && ./scripts/setup.sh",
   "extensions": [
     "rangav.vscode-thunder-client",
     "ms-vscode.cpptools-extension-pack",

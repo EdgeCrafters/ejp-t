@@ -27,8 +27,14 @@ exception:
 	return -1;
 }
 
-int cnvtTC(int resultFile, char *inputContent, int inputSize, char bias)
+int cnvtTC(char *inputContent, int inputSize, struct problemTestcase *testcases)
 {
+	if(!testcases)
+		goto exception;
+	else if (testcases->num > MAXTC - 1)
+		return 0;
+	
+
 	cJSON *root = cJSON_Parse(inputContent);
 	cJSON *result = cJSON_CreateObject();
 	if(!root || !result)
@@ -39,33 +45,12 @@ int cnvtTC(int resultFile, char *inputContent, int inputSize, char bias)
 	if(!inputjson || !outputjson)
 		goto exception;
 
-	char *inputstr, *outputstr, *resultstr, buffer[STRSIZE];
-	inputstr = inputjson->valuestring, outputstr = outputjson->valuestring, resultstr = NULL;
-	
-	for(int i = 0; inputstr[i] != '\0'; ++i){
- 		char c = inputstr[i];
- 
- 		if(c > 32){
- 			c += bias;
- 		}else if(c != ' ' && c != '\n')
-			goto exception;
- 		
-		buffer[i] = c;
-	}
+	char *inputstr, *outputstr;
+	inputstr = inputjson->valuestring, outputstr = outputjson->valuestring;
 
-	cJSON *_input = cJSON_CreateString(buffer);
-	if(!_input)
-		goto exception;
-	cJSON_AddItemToObject(result,"input",_input);
-
-	cJSON *_output = cJSON_CreateString(SHA256(outputstr));
-	if(!_output)
-		goto exception;
-	cJSON_AddItemToObject(result,"output",_output);
-	
-	resultstr = cJSON_Print(result);
-	if(write(resultFile,resultstr,strlen(resultstr)) == 0)
-		goto exception;
+	testcases->input[testcases->num] = strdup(inputstr);
+	testcases->output[testcases->num] = strdup(SHA256(outputstr));
+	++(testcases->num);
 
 	return 0;
 	
@@ -75,7 +60,7 @@ exception:
 }
 
 int encode(char resultPath[], char inputPath[],
-		struct tcInfo biases[], char title[], char description[])
+		struct tcInfo biases[], char title[], char description[], struct problemTestcase *result)
 {
 	char error[STRSIZE];
 
@@ -91,6 +76,7 @@ int encode(char resultPath[], char inputPath[],
 		goto exception;
 	}
 
+	int cnt = 0; // count for testcase
 	srand(time(NULL));
 	struct dirent *dent;
 	while((dent = readdir(inputDir))){
@@ -107,9 +93,8 @@ int encode(char resultPath[], char inputPath[],
 		sprintf(inputFilePath,"%s/%s.json",inputPath,filename);
 		sprintf(resultFilePath,"%s/%s.json",resultPath,filename);
 
-		int resultFile, inputFile;
-		if((resultFile = open(resultFilePath, O_WRONLY|O_CREAT|O_TRUNC,S_IRWXO|S_IRWXU)) <0 
-				|| (inputFile = open(inputFilePath, O_RDONLY)) < 0){
+		int inputFile;
+		if((inputFile = open(inputFilePath, O_RDONLY)) < 0){
 			sprintf(error,"open file");
 			goto exception;
 		}
@@ -120,6 +105,9 @@ int encode(char resultPath[], char inputPath[],
 		fprintf(stdout,"converting %s to %s...\n",inputFilePath, resultFilePath);
 
 		if(!strncmp(filename,"info",4)){
+			int resultFile;
+			if((resultFile = open(resultFilePath, O_WRONLY|O_CREAT|O_TRUNC,S_IRWXO|S_IRWXU)) <0 )
+				goto exception;
 			cnvtInfo(resultFile, inputStr, STRSIZE, title, description);
 
 			close(inputFile);
@@ -130,11 +118,9 @@ int encode(char resultPath[], char inputPath[],
 		static char bias; static int biasIdx = 0;
 		biases[biasIdx].name = strdup(filename);
 		biases[biasIdx].localPath = strdup(resultFilePath);
-		biases[biasIdx++].bias = (bias = rand()%256);
-		cnvtTC(resultFile, inputStr, STRSIZE, bias);
+		cnvtTC(inputStr, STRSIZE, result);
 
 		close(inputFile);
-		close(resultFile);
 	}
 
 	closedir(inputDir);

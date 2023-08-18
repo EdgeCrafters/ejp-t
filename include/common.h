@@ -28,6 +28,8 @@
 #define PWSIZE 16
 #define MAXOPT 16
 
+#define MAXTC 100
+
 struct tcInfo
 {
     char *name;
@@ -42,6 +44,13 @@ struct info
     char *localPath;
     char *remoteAddr;
     char *id;
+};
+
+struct problemTestcase
+{
+    char *input[MAXTC];
+    char *output[MAXTC];
+    int num;
 };
 
 extern char exe[PATHSIZE];

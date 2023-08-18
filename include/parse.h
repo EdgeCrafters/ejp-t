@@ -6,5 +6,5 @@
 #include "common.h"
 
 int encode(char resultPath[], char inputPath[],
-           struct tcInfo biases[], char title[], char description[]);
+		struct tcInfo biases[], char title[], char description[], struct problemTestcase *result);
 #endif

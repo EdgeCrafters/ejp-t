@@ -1,6 +1,5 @@
 #include "parse.h"
 #include "http.h"
-#include "git.h"
 #include "common.h"
 
 int initRepo(const char home[], const char repoName[])
@@ -13,13 +12,10 @@ int initRepo(const char home[], const char repoName[])
     }
     else
         fprintf(stdout, "Init repo (repo address : %d)\n", atoi(repoId));
-
-    char path[PATHSIZE];sprintf(path,"%s/%s/%s",repos,home,repoName);
-    gitInit("gitolite",repoName,path);
-
-    struct info repoInfo;
+        
+    struct info repoInfo = {NULL};
     repoInfo.title = strdup(repoName);
-    repoInfo.id = atoi(repoId);
+    repoInfo.id = strdup(repoId);
     // repoInfo.localPath = strdup(path);
     char address[PATHSIZE]; sprintf(address,"git@%s:%s",home,repoName);
     repoInfo.remoteAddr = strdup(address);
@@ -75,8 +71,9 @@ int updateProblem(char home[], char repoName[], char problemDir[], char problemN
 
     char *resultDir = strdup(problemInfo.localPath);
     char title[STRSIZE] = {'\0'}, description[STRSIZE] = {'\0'};
+    struct problemTestcase testcases = {.num = 0};
     struct tcInfo biases[BUFSIZE];
-    if (encode(resultDir, problemDir, biases, title, description) < 0)
+    if (encode(resultDir, problemDir, biases, title, description, &testcases) < 0)
         goto exception;
 
     if (title[0])
@@ -118,32 +115,44 @@ int makeProblem(char home[], char repoName[], char problemDir[], char problemNam
 
     char title[STRSIZE], description[STRSIZE];
     struct tcInfo biases[BUFSIZE];
-    if (encode(resultDir, problemDir, biases, title, description) < 0)
+    struct problemTestcase testcases = {.num = 0};
+    if (encode(resultDir, problemDir, biases, title, description, &testcases) < 0)
         goto exception;
-    // git upload testcases...
+
 
     struct info repoInfo;
-    if (getInfo(home, repoName, NULL, &repoInfo) < 0)
-    {
+    if (getInfo(home, repoName, NULL, &repoInfo) < 0){
         sprintf(error, "Info");
         goto exception;
     }
 
     char buffer[BUFSIZE];
-    if (createProblemHTTP(home, repoInfo.id, title, description, buffer) < 0)
-    {
-        exit(EXIT_FAILURE);
+    if (createProblemHTTP(home, repoInfo.id, title, description, buffer) < 0){
+        sprintf(error,"createProblemHTTP");
+        goto exception;
     }
+
+    fprintf(stderr,"result : %s",buffer);
+
     cJSON *response = cJSON_Parse(buffer);
     cJSON *id = cJSON_GetObjectItem(response, "id");
     char problemId[IDSIZE];
     sprintf(problemId, "%d", id->valueint);
 
-    struct info problemInfo = {.title = strdup(title), .description = strdup(description), .remoteAddr = "", .id = strdup(problemId)}; // strdup(problemId)};
+    struct info problemInfo = {.title = strdup(title), .description = strdup(description), .remoteAddr = "", .id = strdup(problemId)};
     if (setInfo(home, repoName, problemName, &problemInfo) < 0)
     {
         sprintf(error, "Info");
         goto exception;
+    }
+
+    for(int i = 0 ; i < testcases.num; ++i)
+    {
+        if (uploadHiddencasesHTTP(home,repoInfo.id,problemInfo.id,testcases.input[i],testcases.output[i]))
+        {
+            sprintf(error,"uploadHiddencasesHTTP");
+            goto exception;
+        }
     }
 
     return 0;

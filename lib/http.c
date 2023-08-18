@@ -8,11 +8,15 @@ static size_t getRepoId(void *data, size_t size, size_t nmemb, void *clientp)
     if (clientp)
     {
         cJSON *root = cJSON_Parse(data);
-        fprintf(stderr, "received : %d\n", root);
+        if(!root)
+            goto end;
         cJSON *repoId = cJSON_GetObjectItem(root, "repoId");
+        if(!repoId)
+            goto end;
         sprintf((char *)clientp + writeidx, "%d", repoId->valueint);
         writeidx += nmemb;
     }
+end:
     return size * nmemb;
 }
 
@@ -70,18 +74,23 @@ int loginHTTP(const char home[], const char id[], const char pw[])
 
         curl_easy_setopt(curl, CURLOPT_HEADERFUNCTION, storeCookie);
 
+        char response[BUFSIZE];
         writeidx = 0;
-        curl_easy_setopt(curl, CURLOPT_WRITEDATA, NULL);
+        curl_easy_setopt(curl, CURLOPT_WRITEDATA, response);
         curl_easy_setopt(curl, CURLOPT_WRITEFUNCTION, plainWrite);
 
         res = curl_easy_perform(curl);
 
-        if (res != CURLE_OK)
+        if (res != CURLE_OK){
+            fprintf(stderr,"Error on connection... (url : %s , error : %d)\n", url, res);
             return -1;
+        }
 
         curl_easy_getinfo(curl, CURLINFO_HTTP_CODE, &stat);
-        if (stat != 201)
+        if (stat != 201){
+            fprintf(stderr,"Error on connection... (message : %s)\n",response);
             return -1;
+        }
 
         curl_easy_cleanup(curl);
     }
@@ -117,13 +126,15 @@ int logoutHTTP(const char home[])
         curl_easy_setopt(curl, CURLOPT_POST, 1L);
         curl_easy_setopt(curl, CURLOPT_CONNECTTIMEOUT, 5L);
 
+        list = curl_slist_append(list, "Content-Type: application/json");
         list = curl_slist_append(list, cookie);
         curl_easy_setopt(curl, CURLOPT_HTTPHEADER, list);
 
         curl_easy_setopt(curl, CURLOPT_POSTFIELDS, "");
 
+        char response[BUFSIZE];
         writeidx = 0;
-        curl_easy_setopt(curl, CURLOPT_WRITEDATA, NULL);
+        curl_easy_setopt(curl, CURLOPT_WRITEDATA, response);
         curl_easy_setopt(curl, CURLOPT_WRITEFUNCTION, plainWrite);
 
         res = curl_easy_perform(curl);
@@ -132,8 +143,10 @@ int logoutHTTP(const char home[])
             return -1;
 
         curl_easy_getinfo(curl, CURLINFO_HTTP_CODE, &stat);
-        if (stat != 201)
+        if (stat != 201){
+            fprintf(stderr, "Error on connection... (message : %s)\n", response);
             return -1;
+        }
 
         curl_easy_cleanup(curl);
     }
@@ -153,7 +166,7 @@ int initRepoHTTP(const char home[], const char repoName[], char buffer[], size_t
     long stat;
 
     memset(url, 0, URLSIZE);
-    sprintf(url, "%s/repos/%s", home, repoName);
+    sprintf(url, "%s/repos", home);
 
     memset(cookie, 0, BUFSIZE);
     sprintf(cookie, "Cookie: %s", session.data);
@@ -169,9 +182,12 @@ int initRepoHTTP(const char home[], const char repoName[], char buffer[], size_t
         curl_easy_setopt(curl, CURLOPT_CONNECTTIMEOUT, 5L);
 
         list = curl_slist_append(list, cookie);
+        list = curl_slist_append(list, "Content-Type: application/json");
         curl_easy_setopt(curl, CURLOPT_HTTPHEADER, list);
 
-        curl_easy_setopt(curl, CURLOPT_POSTFIELDS, "");
+        char payload[BUFSIZE];
+        sprintf(payload,"{\"repoName\":\"%s\"}",repoName);
+        curl_easy_setopt(curl, CURLOPT_POSTFIELDS, payload);
 
         writeidx = 0;
         curl_easy_setopt(curl, CURLOPT_WRITEDATA, (void *)buffer);
@@ -183,8 +199,10 @@ int initRepoHTTP(const char home[], const char repoName[], char buffer[], size_t
             return -1;
 
         curl_easy_getinfo(curl, CURLINFO_HTTP_CODE, &stat);
-        if (stat != 201)
+        if (stat != 201){
+            fprintf(stderr, "Error on connection... (message : %s)\n", buffer);
             return -1;
+        }
 
         curl_easy_cleanup(curl);
     }
@@ -237,8 +255,10 @@ int createProblemHTTP(const char home[], const char repoID[], char title[], char
             return -1;
 
         curl_easy_getinfo(curl, CURLINFO_HTTP_CODE, &stat);
-        if (stat != 201)
+        if (stat != 201){
+            fprintf(stderr, "Error on connection... (message : %s)\n", buffer);
             return -1;
+        }
 
         curl_easy_cleanup(curl);
     }
@@ -288,8 +308,9 @@ int updateProblemHTTP(const char home[], const char problemID[], char title[], c
             sprintf(payload, "");
         curl_easy_setopt(curl, CURLOPT_POSTFIELDS, payload);
 
+        char response[BUFSIZE];
         writeidx = 0;
-        curl_easy_setopt(curl, CURLOPT_WRITEDATA, NULL);
+        curl_easy_setopt(curl, CURLOPT_WRITEDATA, response);
         curl_easy_setopt(curl, CURLOPT_WRITEFUNCTION, plainWrite);
 
         res = curl_easy_perform(curl);
@@ -298,8 +319,10 @@ int updateProblemHTTP(const char home[], const char problemID[], char title[], c
             return -1;
 
         curl_easy_getinfo(curl, CURLINFO_HTTP_CODE, &stat);
-        if (stat != 200)
+        if (stat != 200){
+            fprintf(stderr, "Error on connection... (message : %s)\n", response);
             return -1;
+        }
 
         curl_easy_cleanup(curl);
     }
@@ -339,8 +362,9 @@ int deleteProblemHTTP(const char home[], const char problemID[])
         list = curl_slist_append(list, "Content-Type: application/json");
         curl_easy_setopt(curl, CURLOPT_HTTPHEADER, list);
 
+        char response[BUFSIZE];
         writeidx = 0;
-        curl_easy_setopt(curl, CURLOPT_WRITEDATA, NULL);
+        curl_easy_setopt(curl, CURLOPT_WRITEDATA, response);
         curl_easy_setopt(curl, CURLOPT_WRITEFUNCTION, plainWrite);
 
         res = curl_easy_perform(curl);
@@ -349,8 +373,10 @@ int deleteProblemHTTP(const char home[], const char problemID[])
             return -1;
 
         curl_easy_getinfo(curl, CURLINFO_HTTP_CODE, &stat);
-        if (stat != 200)
+        if (stat != 200){
+            fprintf(stderr, "Error on connection... (message : %s)\n", response);
             return -1;
+        }
 
         curl_easy_cleanup(curl);
     }
@@ -360,4 +386,70 @@ int deleteProblemHTTP(const char home[], const char problemID[])
     }
 
     return 0;
+}
+
+int uploadHiddencasesHTTP(const char home[], const char repoID[], const char problemID[], const char input[], const char output[])
+{
+
+    char url[URLSIZE], cookie[BUFSIZE], payload[STRSIZE];
+    CURL *curl;
+    CURLcode res;
+    struct curl_slist *list = NULL;
+    long stat;
+
+    memset(url, 0, URLSIZE);
+    sprintf(url, "%s/testcase", home);
+
+    memset(cookie, 0, BUFSIZE);
+    sprintf(cookie, "Cookie: %s", session.data);
+
+    curl = curl_easy_init();
+
+    if (curl)
+    {
+        curl_easy_setopt(curl, CURLOPT_URL, url);
+        curl_easy_setopt(curl, CURLOPT_PORT, 4000L);
+
+        curl_easy_setopt(curl, CURLOPT_POST, 1L);
+        curl_easy_setopt(curl, CURLOPT_CONNECTTIMEOUT, 5L);
+
+        list = curl_slist_append(list, cookie);
+        list = curl_slist_append(list, "Content-Type: application/json");
+        curl_easy_setopt(curl, CURLOPT_HTTPHEADER, list);
+
+        sprintf(payload,
+         "{\"repoId\": %s,\
+         \"problemId\":%s,\
+         \"input\":\"%s\",\
+         \"output\":\"%s\",\
+         \"isHidden\":\"HIDDEN\"\
+         }",repoID,problemID,input,output);
+
+        curl_easy_setopt(curl, CURLOPT_POSTFIELDS, payload);
+
+        char response[BUFSIZE];
+        writeidx = 0;
+        curl_easy_setopt(curl, CURLOPT_WRITEDATA, response);
+        curl_easy_setopt(curl, CURLOPT_WRITEFUNCTION, plainWrite);
+
+        res = curl_easy_perform(curl);
+
+        if (res != CURLE_OK)
+            return -1;
+
+        curl_easy_getinfo(curl, CURLINFO_HTTP_CODE, &stat);
+        if (stat != 201){
+            fprintf(stderr, "Error on connection... (message : %s)\n", response);
+            return -1;
+        }
+
+        curl_easy_cleanup(curl);
+    }
+    else
+    {
+        fprintf(stderr, "Error on curl...\n");
+    }
+
+    return 0;
+
 }

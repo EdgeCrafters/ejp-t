@@ -16,3 +16,4 @@ services:
       DEVCONTAINER: 1
       CC: clang
       CXX: clang++
+    network_mode: host

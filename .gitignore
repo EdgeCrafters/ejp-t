@@ -1,2 +1,3 @@
 build/*
 cmake-build-Release/*
+.DS_STORE

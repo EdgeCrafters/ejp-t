@@ -126,18 +126,11 @@ int makeProblem(char home[], char repoName[], char problemDir[], char problemNam
         goto exception;
     }
 
-    char buffer[BUFSIZE];
-    if (createProblemHTTP(home, repoInfo.id, title, description, buffer) < 0){
+    char problemId[IDSIZE];
+    if (createProblemHTTP(home, repoInfo.id, title, description, problemId) < 0){
         sprintf(error,"createProblemHTTP");
         goto exception;
     }
-
-    fprintf(stderr,"result : %s",buffer);
-
-    cJSON *response = cJSON_Parse(buffer);
-    cJSON *id = cJSON_GetObjectItem(response, "id");
-    char problemId[IDSIZE];
-    sprintf(problemId, "%d", id->valueint);
 
     struct info problemInfo = {.title = strdup(title), .description = strdup(description), .remoteAddr = "", .id = strdup(problemId)};
     if (setInfo(home, repoName, problemName, &problemInfo) < 0)

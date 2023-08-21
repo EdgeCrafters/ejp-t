@@ -1,47 +1,29 @@
 #include "http.h"
 
-struct cookie session = {.isStore = 0};
-unsigned int writeidx;
+char cookie[PATHSIZE];
+static unsigned int writeidx;
 
-static size_t getRepoId(void *data, size_t size, size_t nmemb, void *clientp)
+static int parseInt(const char data[], const char property[])
 {
-    if (clientp)
-    {
-        cJSON *root = cJSON_Parse(data);
-        if(!root)
-            goto end;
-        cJSON *repoId = cJSON_GetObjectItem(root, "repoId");
-        if(!repoId)
-            goto end;
-        sprintf((char *)clientp + writeidx, "%d", repoId->valueint);
-        writeidx += nmemb;
-    }
-end:
-    return size * nmemb;
+    cJSON *root = cJSON_Parse(data);
+    if(!root)
+        return -1;
+    
+    cJSON *target = cJSON_GetObjectItem(root,property);
+    if(!target)
+        return -1;
+    
+    return target->valueint;
 }
 
 static size_t plainWrite(void *data, size_t size, size_t nmemb, void *clientp)
 {
     if (clientp)
     {
-        strncpy((char *)clientp + writeidx, (char *)data, nmemb);
-        writeidx += nmemb;
+        strncpy((char *)clientp + writeidx, (char *)data, strlen((char*)data));
+        writeidx += strlen((char*)data);
     }
     return size * nmemb;
-}
-
-size_t storeCookie(char *buffer, size_t size, size_t nitems, void *userdata)
-{
-    if (!strncmp(buffer, "Set-Cookie", 10))
-    {
-        int i;
-        for (i = 0; buffer[i] != ';'; ++i)
-            ;
-        buffer[i] = '\0';
-        sprintf(session.data, "%s", buffer + 12);
-        session.isStore = 1;
-    }
-    return nitems * size;
 }
 
 int loginHTTP(const char home[], const char id[], const char pw[])
@@ -62,7 +44,7 @@ int loginHTTP(const char home[], const char id[], const char pw[])
         curl_easy_setopt(curl, CURLOPT_URL, url);
         curl_easy_setopt(curl, CURLOPT_PORT, 4000L);
 
-        curl_easy_setopt(curl, CURLOPT_POST, 1L);
+        curl_easy_setopt(curl, CURLOPT_CUSTOMREQUEST, "POST");
         curl_easy_setopt(curl, CURLOPT_CONNECTTIMEOUT, 5000L);
 
         list = curl_slist_append(list, "Accept: */*");
@@ -72,7 +54,7 @@ int loginHTTP(const char home[], const char id[], const char pw[])
         sprintf(payload, "{\"username\": \"%s\",\"password\":\"%s\"}", id, pw);
         curl_easy_setopt(curl, CURLOPT_POSTFIELDS, payload);
 
-        curl_easy_setopt(curl, CURLOPT_HEADERFUNCTION, storeCookie);
+        curl_easy_setopt(curl, CURLOPT_COOKIEJAR, cookie);
 
         char response[BUFSIZE];
         writeidx = 0;
@@ -88,7 +70,6 @@ int loginHTTP(const char home[], const char id[], const char pw[])
 
         curl_easy_getinfo(curl, CURLINFO_HTTP_CODE, &stat);
         if (stat != 201){
-            fprintf(stderr,"Error on connection... (message : %s)\n",response);
             return -1;
         }
 
@@ -104,7 +85,7 @@ int loginHTTP(const char home[], const char id[], const char pw[])
 
 int logoutHTTP(const char home[])
 {
-    char url[URLSIZE], cookie[BUFSIZE];
+    char url[URLSIZE];
     CURL *curl;
     CURLcode res;
     struct curl_slist *list = NULL;
@@ -113,9 +94,6 @@ int logoutHTTP(const char home[])
     memset(url, 0, URLSIZE);
     sprintf(url, "%s/auth/logout", home);
 
-    memset(cookie, 0, BUFSIZE);
-    sprintf(cookie, "Cookie: %s", session.data);
-
     curl = curl_easy_init();
 
     if (curl)
@@ -126,8 +104,8 @@ int logoutHTTP(const char home[])
         curl_easy_setopt(curl, CURLOPT_POST, 1L);
         curl_easy_setopt(curl, CURLOPT_CONNECTTIMEOUT, 5L);
 
+        curl_easy_setopt(curl, CURLOPT_COOKIEFILE, cookie);
         list = curl_slist_append(list, "Content-Type: application/json");
-        list = curl_slist_append(list, cookie);
         curl_easy_setopt(curl, CURLOPT_HTTPHEADER, list);
 
         curl_easy_setopt(curl, CURLOPT_POSTFIELDS, "");
@@ -136,6 +114,7 @@ int logoutHTTP(const char home[])
         writeidx = 0;
         curl_easy_setopt(curl, CURLOPT_WRITEDATA, response);
         curl_easy_setopt(curl, CURLOPT_WRITEFUNCTION, plainWrite);
+        curl_easy_setopt(curl, CURLOPT_COOKIEFILE, cookie);
 
         res = curl_easy_perform(curl);
 
@@ -144,7 +123,7 @@ int logoutHTTP(const char home[])
 
         curl_easy_getinfo(curl, CURLINFO_HTTP_CODE, &stat);
         if (stat != 201){
-            fprintf(stderr, "Error on connection... (message : %s)\n", response);
+            fprintf(stderr, "Error on connection... %s\n", response);
             return -1;
         }
 
@@ -157,9 +136,9 @@ int logoutHTTP(const char home[])
     return 0;
 }
 
-int initRepoHTTP(const char home[], const char repoName[], char buffer[], size_t bufSize)
+int initRepoHTTP(const char home[], const char repoName[], char repoId[], size_t bufSize)
 {
-    char url[URLSIZE], cookie[BUFSIZE];
+    char url[URLSIZE];
     CURL *curl;
     CURLcode res;
     struct curl_slist *list = NULL;
@@ -168,9 +147,6 @@ int initRepoHTTP(const char home[], const char repoName[], char buffer[], size_t
     memset(url, 0, URLSIZE);
     sprintf(url, "%s/repos", home);
 
-    memset(cookie, 0, BUFSIZE);
-    sprintf(cookie, "Cookie: %s", session.data);
-
     curl = curl_easy_init();
 
     if (curl)
@@ -181,7 +157,7 @@ int initRepoHTTP(const char home[], const char repoName[], char buffer[], size_t
         curl_easy_setopt(curl, CURLOPT_POST, 1L);
         curl_easy_setopt(curl, CURLOPT_CONNECTTIMEOUT, 5L);
 
-        list = curl_slist_append(list, cookie);
+        curl_easy_setopt(curl, CURLOPT_COOKIEFILE, cookie);
         list = curl_slist_append(list, "Content-Type: application/json");
         curl_easy_setopt(curl, CURLOPT_HTTPHEADER, list);
 
@@ -189,9 +165,10 @@ int initRepoHTTP(const char home[], const char repoName[], char buffer[], size_t
         sprintf(payload,"{\"repoName\":\"%s\"}",repoName);
         curl_easy_setopt(curl, CURLOPT_POSTFIELDS, payload);
 
+        char response[BUFSIZE];
         writeidx = 0;
-        curl_easy_setopt(curl, CURLOPT_WRITEDATA, (void *)buffer);
-        curl_easy_setopt(curl, CURLOPT_WRITEFUNCTION, getRepoId);
+        curl_easy_setopt(curl, CURLOPT_WRITEDATA, (void *)response);
+        curl_easy_setopt(curl, CURLOPT_WRITEFUNCTION, plainWrite);
 
         res = curl_easy_perform(curl);
 
@@ -199,12 +176,18 @@ int initRepoHTTP(const char home[], const char repoName[], char buffer[], size_t
             return -1;
 
         curl_easy_getinfo(curl, CURLINFO_HTTP_CODE, &stat);
-        if (stat != 201){
-            fprintf(stderr, "Error on connection... (message : %s)\n", buffer);
+        if (stat == 401) {
+            curl_easy_cleanup(curl);
+            userLogin(home);
+            return initRepoHTTP(home,repoName,repoId,bufSize);
+        } else if (stat != 201) {
+            fprintf(stderr, "Error on connection... %s\n", response);
             return -1;
         }
 
         curl_easy_cleanup(curl);
+
+        sprintf(repoId,"%d",parseInt(response,"repoId"));
     }
     else
     {
@@ -214,9 +197,9 @@ int initRepoHTTP(const char home[], const char repoName[], char buffer[], size_t
     return 0;
 }
 
-int createProblemHTTP(const char home[], const char repoID[], char title[], char description[], char buffer[])
+int createProblemHTTP(const char home[], const char repoID[], char title[], char description[], char problemId[])
 {
-    char url[URLSIZE], cookie[BUFSIZE], payload[STRSIZE];
+    char url[URLSIZE], payload[STRSIZE]; 
     CURL *curl;
     CURLcode res;
     struct curl_slist *list = NULL;
@@ -224,9 +207,6 @@ int createProblemHTTP(const char home[], const char repoID[], char title[], char
 
     memset(url, 0, URLSIZE);
     sprintf(url, "%s/problem/%s", home, repoID);
-
-    memset(cookie, 0, BUFSIZE);
-    sprintf(cookie, "Cookie: %s", session.data);
 
     curl = curl_easy_init();
 
@@ -238,15 +218,16 @@ int createProblemHTTP(const char home[], const char repoID[], char title[], char
         curl_easy_setopt(curl, CURLOPT_POST, 1L);
         curl_easy_setopt(curl, CURLOPT_CONNECTTIMEOUT, 5L);
 
-        list = curl_slist_append(list, cookie);
+        curl_easy_setopt(curl, CURLOPT_COOKIEFILE, cookie);
         list = curl_slist_append(list, "Content-Type: application/json");
         curl_easy_setopt(curl, CURLOPT_HTTPHEADER, list);
 
         sprintf(payload, "{\"title\": \"%s\",\"text\":\"%s\"}", title, description);
         curl_easy_setopt(curl, CURLOPT_POSTFIELDS, payload);
 
+        char response[BUFSIZE];
         writeidx = 0;
-        curl_easy_setopt(curl, CURLOPT_WRITEDATA, (void *)buffer);
+        curl_easy_setopt(curl, CURLOPT_WRITEDATA, (void *)response);
         curl_easy_setopt(curl, CURLOPT_WRITEFUNCTION, plainWrite);
 
         res = curl_easy_perform(curl);
@@ -255,12 +236,18 @@ int createProblemHTTP(const char home[], const char repoID[], char title[], char
             return -1;
 
         curl_easy_getinfo(curl, CURLINFO_HTTP_CODE, &stat);
-        if (stat != 201){
-            fprintf(stderr, "Error on connection... (message : %s)\n", buffer);
+        if (stat == 401){
+            curl_easy_cleanup(curl);
+            userLogin(home);
+            return createProblemHTTP(home,repoID,title,description,problemId);
+        }else if (stat != 201){
+            fprintf(stderr, "Error on connection... %s\n", response);
             return -1;
         }
 
         curl_easy_cleanup(curl);
+
+        sprintf(problemId,"%d",parseInt(response,"id"));
     }
     else
     {
@@ -272,7 +259,7 @@ int createProblemHTTP(const char home[], const char repoID[], char title[], char
 
 int updateProblemHTTP(const char home[], const char problemID[], char title[], char description[])
 {
-    char url[URLSIZE], cookie[BUFSIZE], payload[STRSIZE];
+    char url[URLSIZE], payload[STRSIZE];
     CURL *curl;
     CURLcode res;
     struct curl_slist *list = NULL;
@@ -280,9 +267,6 @@ int updateProblemHTTP(const char home[], const char problemID[], char title[], c
 
     memset(url, 0, URLSIZE);
     sprintf(url, "%s/problem/%s", home, problemID);
-
-    memset(cookie, 0, BUFSIZE);
-    sprintf(cookie, "Cookie: %s", session.data);
 
     curl = curl_easy_init();
 
@@ -294,7 +278,7 @@ int updateProblemHTTP(const char home[], const char problemID[], char title[], c
         curl_easy_setopt(curl, CURLOPT_CUSTOMREQUEST, "PATCH");
         curl_easy_setopt(curl, CURLOPT_CONNECTTIMEOUT, 5L);
 
-        list = curl_slist_append(list, cookie);
+        curl_easy_setopt(curl, CURLOPT_COOKIEFILE, cookie);
         list = curl_slist_append(list, "Content-Type: application/json");
         curl_easy_setopt(curl, CURLOPT_HTTPHEADER, list);
 
@@ -319,7 +303,11 @@ int updateProblemHTTP(const char home[], const char problemID[], char title[], c
             return -1;
 
         curl_easy_getinfo(curl, CURLINFO_HTTP_CODE, &stat);
-        if (stat != 200){
+        if (stat == 401){
+            curl_easy_cleanup(curl);
+            userLogin(home);
+            return updateProblemHTTP(home,problemID,title,description);
+        }else if (stat != 200){
             fprintf(stderr, "Error on connection... (message : %s)\n", response);
             return -1;
         }
@@ -336,7 +324,7 @@ int updateProblemHTTP(const char home[], const char problemID[], char title[], c
 
 int deleteProblemHTTP(const char home[], const char problemID[])
 {
-    char url[URLSIZE], cookie[BUFSIZE], payload[STRSIZE];
+    char url[URLSIZE],payload[STRSIZE];
     CURL *curl;
     CURLcode res;
     struct curl_slist *list = NULL;
@@ -344,9 +332,6 @@ int deleteProblemHTTP(const char home[], const char problemID[])
 
     memset(url, 0, URLSIZE);
     sprintf(url, "%s/problem/%s", home, problemID);
-
-    memset(cookie, 0, BUFSIZE);
-    sprintf(cookie, "Cookie: %s", session.data);
 
     curl = curl_easy_init();
 
@@ -358,7 +343,7 @@ int deleteProblemHTTP(const char home[], const char problemID[])
         curl_easy_setopt(curl, CURLOPT_CUSTOMREQUEST, "DELETE");
         curl_easy_setopt(curl, CURLOPT_CONNECTTIMEOUT, 5L);
 
-        list = curl_slist_append(list, cookie);
+        curl_easy_setopt(curl, CURLOPT_COOKIEFILE, cookie);
         list = curl_slist_append(list, "Content-Type: application/json");
         curl_easy_setopt(curl, CURLOPT_HTTPHEADER, list);
 
@@ -373,7 +358,11 @@ int deleteProblemHTTP(const char home[], const char problemID[])
             return -1;
 
         curl_easy_getinfo(curl, CURLINFO_HTTP_CODE, &stat);
-        if (stat != 200){
+        if (stat == 401){
+            curl_easy_cleanup(curl);
+            userLogin(home);
+            return deleteProblemHTTP(home,problemID);
+        } else if (stat != 200){
             fprintf(stderr, "Error on connection... (message : %s)\n", response);
             return -1;
         }
@@ -391,7 +380,7 @@ int deleteProblemHTTP(const char home[], const char problemID[])
 int uploadHiddencasesHTTP(const char home[], const char repoID[], const char problemID[], const char input[], const char output[])
 {
 
-    char url[URLSIZE], cookie[BUFSIZE], payload[STRSIZE];
+    char url[URLSIZE], payload[STRSIZE];
     CURL *curl;
     CURLcode res;
     struct curl_slist *list = NULL;
@@ -399,9 +388,6 @@ int uploadHiddencasesHTTP(const char home[], const char repoID[], const char pro
 
     memset(url, 0, URLSIZE);
     sprintf(url, "%s/testcase", home);
-
-    memset(cookie, 0, BUFSIZE);
-    sprintf(cookie, "Cookie: %s", session.data);
 
     curl = curl_easy_init();
 
@@ -413,7 +399,7 @@ int uploadHiddencasesHTTP(const char home[], const char repoID[], const char pro
         curl_easy_setopt(curl, CURLOPT_POST, 1L);
         curl_easy_setopt(curl, CURLOPT_CONNECTTIMEOUT, 5L);
 
-        list = curl_slist_append(list, cookie);
+        curl_easy_setopt(curl, CURLOPT_COOKIEFILE, cookie);
         list = curl_slist_append(list, "Content-Type: application/json");
         curl_easy_setopt(curl, CURLOPT_HTTPHEADER, list);
 
@@ -438,8 +424,13 @@ int uploadHiddencasesHTTP(const char home[], const char repoID[], const char pro
             return -1;
 
         curl_easy_getinfo(curl, CURLINFO_HTTP_CODE, &stat);
-        if (stat != 201){
-            fprintf(stderr, "Error on connection... (message : %s)\n", response);
+        if(stat == 401){
+            fprintf(stderr,"response : %s\n",response);
+            curl_easy_cleanup(curl);
+            userLogin(home);
+            return uploadHiddencasesHTTP(home,repoID,problemID,input,output);
+        } else if (stat != 201){
+            fprintf(stderr, "Error on connection... %s at %s\n", response,url);
             return -1;
         }
 

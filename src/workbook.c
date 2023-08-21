@@ -1,10 +1,5 @@
 #include "common.h" 
 
-char exe[PATHSIZE];
-char homeCache[PATHSIZE];
-char problemLocationCache[PATHSIZE];
-char wbLocationCache[PATHSIZE];
-char repos[PATHSIZE];
 
 int deleteProblem(char home[], char repoName[], char problemName[]);
 int updateProblem(char home[], char repoName[], char problemDir[], char problemName[]);
@@ -110,7 +105,7 @@ static int create(int argc, char*argv[])
 	if(mkdir(repoAddr, S_IRWXU|S_IRWXO)<0 && errno != EEXIST)
 		goto exception;
 
-	userLogin(home);
+	// userLogin(home);
 
 	if(initRepo(home,repoName)<0)
 		goto exception;
@@ -150,18 +145,6 @@ int workbook
 		fprintf(stderr,"no command ...\n");
 		workbookInfo();
 		exit(-1);
-	}
-
-	if(getExecutablePath(exe)<0){
-		fprintf(stderr,"cannot configure current path ...\n");
-		workbookInfo();
-		exit(-1);
-	}else{
-		sprintf(homeCache,"%s/../.ejs/cache/home.txt",exe);
-		sprintf(problemLocationCache,"%s/../.ejs/cache/problemLocation.txt",exe);
-		sprintf(wbLocationCache,"%s/../.ejs/cache/wbLocation.txt",exe);
-		sprintf(repos,"%s/../.ejs/repos",exe);
-		fprintf(stderr,"p %s l %s\n",problemLocationCache,wbLocationCache);
 	}
 
 	if(!strncmp(command,"create",6)){

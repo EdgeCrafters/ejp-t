@@ -1,5 +1,12 @@
 #include "common.h"
 
+char exe[PATHSIZE];
+char homeCache[PATHSIZE];
+char problemLocationCache[PATHSIZE];
+char wbLocationCache[PATHSIZE];
+char archives[PATHSIZE];
+char repos[PATHSIZE];
+
 int workbook(int argc, char *argv[]);
 
 int main(int argc, char *argv[])
@@ -11,6 +18,19 @@ int main(int argc, char *argv[])
         basicInfo();
         exit(-1);
     }
+
+	if(getExecutablePath(exe)<0){
+		fprintf(stderr,"cannot configure current path ...\n");
+		workbookInfo();
+		exit(-1);
+	}else{
+		sprintf(homeCache,"%s/../.ejs/cache/home.txt",exe);
+		sprintf(problemLocationCache,"%s/../.ejs/cache/problemLocation.txt",exe);
+		sprintf(wbLocationCache,"%s/../.ejs/cache/wbLocation.txt",exe);
+		sprintf(cookie,"%s/../.ejs/cache/cookie.txt",exe);
+		sprintf(repos,"%s/../.ejs/repos",exe);
+        sprintf(archives,"%s/../.ejs/archives",exe);
+	}
 
     if (!strncmp(command, "workbook", 8))
     {

@@ -2,16 +2,53 @@
 #include "http.h"
 #include "common.h"
 
-int initRepo(const char home[], const char repoName[])
+int uploadFile(const char home[], const char repoName[], const char problemName[], const int problemId)
 {
+    char error[BUFSIZE];
+
+    char archHome[PATHSIZE]; sprintf(archHome,"%s/%s",archives,home);
+    char archRepo[URLSIZE]; sprintf(archRepo,"%s/%s",archHome,repoName);
+	if(mkdir(archHome, S_IRWXU|S_IRWXO)<0 && errno != EEXIST){
+        sprintf(error,"mkdir");
+        return -1;
+    }
+    if(mkdir(archRepo, S_IRWXU|S_IRWXO)<0 && errno != EEXIST){
+		sprintf(error,"mkdir");
+        return -1;
+    }
+    char targetDir[PATHSIZE]; sprintf(targetDir,"%s/%s/%s/%s",repos,home,repoName,problemName);
+    char resultTar[PATHSIZE]; sprintf(resultTar,"%s/%s.tar",archRepo,problemName);
+    char cmd[CMDSIZE]; sprintf(cmd,"tar -czf %s %s 2> /dev/null",resultTar,targetDir);
+    if(system(cmd) < 0){
+        sprintf(error,"tar");
+        return -1;
+    }
+
+    char problemID[IDSIZE]; sprintf(problemID,"%d",problemId);
+    uploadFileHTTP(home,problemID,resultTar);
+
+    return 0;
+
+exception:
+    fprintf(stderr,"%s error...\n",error);
+    return -1;
+}
+
+int initRepo(const char home[], const char repoName[])
+{	
+	char homeAddr[URLSIZE]; sprintf(homeAddr,"%s/%s",repos,home);
+	if(mkdir(homeAddr, S_IRWXU|S_IRWXO)<0 && errno != EEXIST)
+		goto exception;
+	char repoAddr[URLSIZE]; sprintf(repoAddr,"%s/%s",homeAddr,repoName);
+	if(mkdir(repoAddr, S_IRWXU|S_IRWXO)<0 && errno != EEXIST)
+		goto exception;
+
     char repoId[BUFSIZE];
     if (initRepoHTTP(home, repoName, repoId, BUFSIZE) < 0)
     {
         fprintf(stderr, "Fail to init repo ...\n");
-        exit(EXIT_FAILURE);
+        goto exception;
     }
-    else
-        fprintf(stdout, "Init repo (repo address : %d)\n", atoi(repoId));
         
     struct info repoInfo = {NULL};
     repoInfo.title = strdup(repoName);
@@ -99,19 +136,16 @@ exception:
     exit(EXIT_FAILURE);
 }
 
-int makeProblem(char home[], char repoName[], char problemDir[], char problemName[], char result[])
+int makeProblem(char home[], char repoName[], char problemDir[], char problemName[])
 {
     char error[STRSIZE];
 
-    if (mkdir(result, S_IRWXU | S_IRWXO) < 0 && errno != EEXIST)
-    {
+    char resultDir[URLSIZE];
+    sprintf(resultDir, "%s/%s/%s/%s", repos, home, repoName,problemName);
+    if (mkdir(resultDir, S_IRWXU | S_IRWXO) < 0 && errno != EEXIST) {
         sprintf(error, "mkdir %d ", errno);
         goto exception;
     }
-
-    char resultDir[URLSIZE];
-    sprintf(resultDir, "%s/%s", result, problemName);
-    fprintf(stderr, "resultDir : %s\n", resultDir);
 
     char title[STRSIZE], description[STRSIZE];
     struct tcInfo biases[BUFSIZE];
@@ -119,30 +153,27 @@ int makeProblem(char home[], char repoName[], char problemDir[], char problemNam
     if (encode(resultDir, problemDir, biases, title, description, &testcases) < 0)
         goto exception;
 
-
     struct info repoInfo;
     if (getInfo(home, repoName, NULL, &repoInfo) < 0){
         sprintf(error, "Info");
         goto exception;
     }
 
-    char buffer[BUFSIZE];
-    if (createProblemHTTP(home, repoInfo.id, title, description, buffer) < 0){
+    char problemId[IDSIZE];
+    if (createProblemHTTP(home, repoInfo.id, title, description, problemId) < 0){
         sprintf(error,"createProblemHTTP");
         goto exception;
     }
-
-    fprintf(stderr,"result : %s",buffer);
-
-    cJSON *response = cJSON_Parse(buffer);
-    cJSON *id = cJSON_GetObjectItem(response, "id");
-    char problemId[IDSIZE];
-    sprintf(problemId, "%d", id->valueint);
 
     struct info problemInfo = {.title = strdup(title), .description = strdup(description), .remoteAddr = "", .id = strdup(problemId)};
     if (setInfo(home, repoName, problemName, &problemInfo) < 0)
     {
         sprintf(error, "Info");
+        goto exception;
+    }
+
+    if(uploadFile(home,repoName,problemName,problemInfo.id)){
+        sprintf(error,"Upload file");
         goto exception;
     }
 

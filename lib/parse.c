@@ -1,5 +1,13 @@
 #include "parse.h"
 
+
+int cnvtNormal(int resultFile, char *inputContent, int inputSize)
+{
+	if(write(resultFile,inputContent,strlen(inputContent)) < 0)
+		return -1;
+	return 0;
+}
+
 int cnvtInfo(int resultFile, char *inputContent, int inputSize, char title[], char description[])
 {
 	cJSON *root = cJSON_Parse(inputContent);
@@ -83,15 +91,19 @@ int encode(char resultPath[], char inputPath[],
 		if(dent->d_type != DT_REG)
 			continue;
 
-		char filename[BUFSIZE],*extension;
+		static int isJson;
+		char filename[BUFSIZE],*extension,inputFilePath[BUFSIZE],resultFilePath[BUFSIZE];
 		strcpy(filename,dent->d_name);extension = getExtension(filename);
-		if(strncmp(extension,".json",5))
-			continue;
-		*extension = '\0';
-
-		char inputFilePath[BUFSIZE], resultFilePath[BUFSIZE];
-		sprintf(inputFilePath,"%s/%s.json",inputPath,filename);
-		sprintf(resultFilePath,"%s/%s.json",resultPath,filename);
+		if(strncmp(extension,".json",5)){
+			isJson = 0;
+			sprintf(inputFilePath,"%s/%s",inputPath,filename);
+			sprintf(resultFilePath,"%s/%s",resultPath,filename);
+		}else{
+			isJson = 1;
+			*extension = '\0';
+			sprintf(inputFilePath,"%s/%s.json",inputPath,filename);
+			sprintf(resultFilePath,"%s/%s.json",resultPath,filename);
+		}
 
 		int inputFile;
 		if((inputFile = open(inputFilePath, O_RDONLY)) < 0){
@@ -103,6 +115,17 @@ int encode(char resultPath[], char inputPath[],
 		read(inputFile, inputStr, STRSIZE);
 			
 		fprintf(stdout,"converting %s to %s...\n",inputFilePath, resultFilePath);
+
+		if(!isJson){
+			int resultFile;
+			if((resultFile = open(resultFilePath, O_WRONLY|O_CREAT|O_TRUNC,S_IRWXO|S_IRWXU)) <0 )
+				goto exception;
+			cnvtNormal(resultFile, inputStr, STRSIZE);
+
+			close(inputFile);
+			close(resultFile);
+			continue;
+		}
 
 		if(!strncmp(filename,"info",4)){
 			int resultFile;

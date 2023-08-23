@@ -57,7 +57,9 @@ extern char exe[PATHSIZE];
 extern char homeCache[PATHSIZE];
 extern char problemLocationCache[PATHSIZE];
 extern char wbLocationCache[PATHSIZE];
+extern char cookie[PATHSIZE];
 extern char repos[PATHSIZE];
+extern char archives[PATHSIZE];
 
 int parseOpt(int argc, char *argv[], const char targetOpt[], const int optNum, char *optArg[], char *caches[]);
 void userLogin(const char home[]);

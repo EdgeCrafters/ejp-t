@@ -444,3 +444,70 @@ int uploadHiddencasesHTTP(const char home[], const char repoID[], const char pro
     return 0;
 
 }
+
+int uploadFileHTTP(const char home[], const char problemID[], const char path[])
+{
+    char url[URLSIZE], payload[STRSIZE];
+    CURL *curl;
+    CURLcode res;
+    struct curl_slist *list = NULL;
+    long stat;
+
+    memset(url, 0, URLSIZE);
+    sprintf(url, "%s/repos/files/%s", home,problemID);
+
+    curl = curl_easy_init();
+
+    if (curl)
+    {
+        curl_easy_setopt(curl, CURLOPT_URL, url);
+        curl_easy_setopt(curl, CURLOPT_PORT, 4000L);
+
+        curl_easy_setopt(curl, CURLOPT_POST, 1L);
+        curl_easy_setopt(curl, CURLOPT_CONNECTTIMEOUT, 5L);
+
+        curl_easy_setopt(curl, CURLOPT_COOKIEFILE, cookie);
+        list = curl_slist_append(list, "Content-Type: multipart/form-data");
+        curl_easy_setopt(curl, CURLOPT_HTTPHEADER, list);
+
+        curl_mime *form = NULL;
+        curl_mimepart *field = NULL;
+
+        form = curl_mime_init(curl);
+
+        field = curl_mime_addpart(form);
+        curl_mime_name(field, "file");
+        curl_mime_filedata(field, path);
+
+        curl_easy_setopt(curl, CURLOPT_MIMEPOST, form);
+
+        char response[BUFSIZE];
+        // writeidx = 0;
+        // curl_easy_setopt(curl, CURLOPT_WRITEDATA, response);
+        // curl_easy_setopt(curl, CURLOPT_WRITEFUNCTION, plainWrite);
+
+        res = curl_easy_perform(curl);
+
+        if (res != CURLE_OK)
+            return -1;
+
+        curl_easy_getinfo(curl, CURLINFO_HTTP_CODE, &stat);
+        if(stat == 401){
+            fprintf(stderr,"response : %s\n",response);
+            curl_easy_cleanup(curl);
+            userLogin(home);
+            return uploadFileHTTP(home,problemID,path);
+        } else if (stat != 201){
+            fprintf(stderr, "Error on connection... %s at %s\n", response,url);
+            return -1;
+        }
+
+        curl_easy_cleanup(curl);
+    }
+    else
+    {
+        fprintf(stderr, "Error on curl...\n");
+    }
+
+    return 0;
+}

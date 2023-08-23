@@ -4,6 +4,7 @@ char exe[PATHSIZE];
 char homeCache[PATHSIZE];
 char problemLocationCache[PATHSIZE];
 char wbLocationCache[PATHSIZE];
+char archives[PATHSIZE];
 char repos[PATHSIZE];
 
 int workbook(int argc, char *argv[]);
@@ -28,7 +29,7 @@ int main(int argc, char *argv[])
 		sprintf(wbLocationCache,"%s/../.ejs/cache/wbLocation.txt",exe);
 		sprintf(cookie,"%s/../.ejs/cache/cookie.txt",exe);
 		sprintf(repos,"%s/../.ejs/repos",exe);
-		fprintf(stderr,"p %s l %s\n",problemLocationCache,wbLocationCache);
+        sprintf(archives,"%s/../.ejs/archives",exe);
 	}
 
     if (!strncmp(command, "workbook", 8))

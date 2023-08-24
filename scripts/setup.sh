@@ -8,3 +8,5 @@ touch .ejs/cache/wbLocation.txt &&\
 touch .ejs/cache/cookie.txt &&\
 mkdir -p .ejs/repos &&\
 mkdir -p .ejs/archives
+
+export PATH=$PATH:/workspace/build/src

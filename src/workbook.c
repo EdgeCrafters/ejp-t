@@ -2,7 +2,7 @@
 
 int deleteProblem(char home[], char repoName[], char problemName[]);
 int updateProblem(char home[], char repoName[], char problemDir[], char problemName[]);
-int makeProblem(char home[], char repoName[], char problemDir[], char problemName[]);
+int makeProblem(char home[], char repoName[], char problemDir[]);
 int initRepo(const char home[], const char repoName[]);
 
 // delete an additional problem in repo
@@ -36,15 +36,7 @@ static int append(int argc, char*argv[])
 		exit(EXIT_FAILURE);
 	}
 
-	char *problemName, *buf, *_location;
-	_location = strdup(location);
-	buf = strtok(_location,"/");
-	while(buf  != NULL){
-		problemName = strdup(buf);
-		buf = strtok(NULL, "/");
-	}
-	makeProblem(home, repoName, location, problemName);
-	free(_location);free(problemName);
+	makeProblem(home, repoName, location);
 
 	return 0;
 }
@@ -96,7 +88,7 @@ static int create(int argc, char*argv[])
 		if(dent->d_type == DT_DIR && dent->d_name[0] != '.')
 		{
 			sprintf(problem,"%s/%s",location,dent->d_name);
-			makeProblem(home,repoName,problem,dent->d_name);
+			makeProblem(home,repoName,problem);
 		}
 	closedir(workbookDir);
 

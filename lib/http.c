@@ -482,9 +482,9 @@ int uploadFileHTTP(const char home[], const char problemID[], const char path[])
         curl_easy_setopt(curl, CURLOPT_MIMEPOST, form);
 
         char response[BUFSIZE];
-        // writeidx = 0;
-        // curl_easy_setopt(curl, CURLOPT_WRITEDATA, response);
-        // curl_easy_setopt(curl, CURLOPT_WRITEFUNCTION, plainWrite);
+        writeidx = 0;
+        curl_easy_setopt(curl, CURLOPT_WRITEDATA, response);
+        curl_easy_setopt(curl, CURLOPT_WRITEFUNCTION, plainWrite);
 
         res = curl_easy_perform(curl);
 
@@ -503,6 +503,7 @@ int uploadFileHTTP(const char home[], const char problemID[], const char path[])
         }
 
         curl_easy_cleanup(curl);
+        fprintf(stderr,"response : %s\n",response);
     }
     else
     {

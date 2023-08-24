@@ -12,6 +12,13 @@
 #include <errno.h>
 #include <libgen.h>
 
+
+#ifdef WIN32
+#include <windows.h>
+#elif _POSIX_C_SOURCE >= 199309L
+#include <time.h>   // for nanosleep
+#endif
+
 #include "cJSON.h"
 
 #define STRSIZE 1048576
@@ -23,12 +30,15 @@
 #define PATHSIZE 512
 
 #define VALUESIZE 32
+#define ERRORISZE 32
 
 #define IDSIZE 16
 #define PWSIZE 16
 #define MAXOPT 16
 
 #define MAXTC 100
+
+enum type {problem, repo, testcase};
 
 struct tcInfo
 {
@@ -44,6 +54,7 @@ struct info
     char *localPath;
     char *remoteAddr;
     char *id;
+    enum type type;
 };
 
 struct problemTestcase
@@ -68,4 +79,8 @@ char *getExtension(char *target);
 int getExecutablePath(char path[]);
 int setInfo(char home[], char repoName[], char problemName[], struct info *info);
 int getInfo(char home[], char repoName[], char problemName[], struct info *info);
+int getInfoByPath(const char path[], struct info *info);
+
+void sleep_ms(int milliseconds);
+
 #endif

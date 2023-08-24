@@ -26,6 +26,8 @@
         "diff.h": "c",
         "curl.h": "c",
         "common.h": "c",
-        "http.h": "c"
+        "http.h": "c",
+        "dirent.h": "c",
+        "unistd.h": "c"
     }
 }

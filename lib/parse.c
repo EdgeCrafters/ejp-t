@@ -114,13 +114,21 @@ int encode(char resultPath[], char inputPath[],
 		char inputStr[STRSIZE];
 		read(inputFile, inputStr, STRSIZE);
 			
-		fprintf(stdout,"converting %s to %s...\n",inputFilePath, resultFilePath);
+		fprintf(stderr,"converting %s to %s ",inputFilePath, resultFilePath);
+
+		for(int i = 0; i<5; ++i){
+			sleep_ms(10);
+			fprintf(stderr,".");
+		}
 
 		if(!isJson){
 			int resultFile;
 			if((resultFile = open(resultFilePath, O_WRONLY|O_CREAT|O_TRUNC,S_IRWXO|S_IRWXU)) <0 )
 				goto exception;
-			cnvtNormal(resultFile, inputStr, STRSIZE);
+			if(cnvtNormal(resultFile, inputStr, STRSIZE)<0)
+				fprintf(stderr," fail!\n");
+			else
+				fprintf(stderr," done!\n");
 
 			close(inputFile);
 			close(resultFile);
@@ -131,7 +139,10 @@ int encode(char resultPath[], char inputPath[],
 			int resultFile;
 			if((resultFile = open(resultFilePath, O_WRONLY|O_CREAT|O_TRUNC,S_IRWXO|S_IRWXU)) <0 )
 				goto exception;
-			cnvtInfo(resultFile, inputStr, STRSIZE, title, description);
+			if(cnvtInfo(resultFile, inputStr, STRSIZE, title, description)<0)
+				fprintf(stderr,"f ail!\n");
+			else
+				fprintf(stderr," done!\n");
 
 			close(inputFile);
 			close(resultFile);
@@ -141,7 +152,10 @@ int encode(char resultPath[], char inputPath[],
 		static char bias; static int biasIdx = 0;
 		biases[biasIdx].name = strdup(filename);
 		biases[biasIdx].localPath = strdup(resultFilePath);
-		cnvtTC(inputStr, STRSIZE, result);
+		if(cnvtTC(inputStr, STRSIZE, result)<0)
+			fprintf(stderr," fail!\n");
+		else
+			fprintf(stderr," done!\n");
 
 		close(inputFile);
 	}

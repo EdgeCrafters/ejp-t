@@ -16,3 +16,9 @@ void workbookInfo(void)
 	basicInfo();
 	printf("workbook command : \n");
 }
+
+void manageInfo(void)
+{
+	basicInfo();
+	printf("workbook command : \n");
+}

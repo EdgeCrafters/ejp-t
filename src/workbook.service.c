@@ -2,7 +2,7 @@
 #include "http.h"
 #include "common.h"
 
-int uploadFile(const char home[], const char repoName[], const char problemName[], const int problemId)
+int uploadFile(const char home[], const char repoName[], const char problemName[], const char problemId[])
 {
     char error[BUFSIZE];
 
@@ -21,11 +21,13 @@ int uploadFile(const char home[], const char repoName[], const char problemName[
     char cmd[CMDSIZE]; sprintf(cmd,"tar -czf %s %s 2> /dev/null",resultTar,targetDir);
     if(system(cmd) < 0){
         sprintf(error,"tar");
-        return -1;
+        goto exception;
     }
 
-    char problemID[IDSIZE]; sprintf(problemID,"%d",problemId);
-    uploadFileHTTP(home,problemID,resultTar);
+    if(uploadFileHTTP(home,problemId,resultTar)<0){
+        sprintf(error,"upload file");
+        goto exception;
+    }
 
     return 0;
 
@@ -136,9 +138,16 @@ exception:
     exit(EXIT_FAILURE);
 }
 
-int makeProblem(char home[], char repoName[], char problemDir[], char problemName[])
+int makeProblem(char home[], char repoName[], char problemDir[])
 {
     char error[STRSIZE];
+
+    struct info rawInfo;
+    char infoPath[PATHSIZE];
+    sprintf(infoPath,"%s/info.json",problemDir);
+    getInfoByPath(infoPath,&rawInfo);
+    char problemName[VALUESIZE];
+    sprintf(problemName,"%s",rawInfo.title);
 
     char resultDir[URLSIZE];
     sprintf(resultDir, "%s/%s/%s/%s", repos, home, repoName,problemName);
@@ -178,13 +187,11 @@ int makeProblem(char home[], char repoName[], char problemDir[], char problemNam
     }
 
     for(int i = 0 ; i < testcases.num; ++i)
-    {
         if (uploadHiddencasesHTTP(home,repoInfo.id,problemInfo.id,testcases.input[i],testcases.output[i]))
         {
             sprintf(error,"uploadHiddencasesHTTP");
             goto exception;
         }
-    }
 
     return 0;
 

@@ -8,6 +8,8 @@ char archives[PATHSIZE];
 char repos[PATHSIZE];
 
 int workbook(int argc, char *argv[]);
+int manage(int argc, char *argv[]);
+int setCaches(void);
 
 int main(int argc, char *argv[])
 {
@@ -19,6 +21,31 @@ int main(int argc, char *argv[])
         exit(-1);
     }
 
+    if (!strncmp(command, "workbook", 8))
+    {
+        fprintf(stderr, "workbook : ");
+        setCaches();
+        workbook(argc, argv);
+        fprintf(stdout,"Successfully done!\n");
+    }
+    else if (!strncmp(command, "manage",6))
+    {
+        fprintf(stderr,"manage : ");
+        setCaches();
+        manage(argc, argv);
+        fprintf(stdout,"Successfully done!\n");
+    }
+    else
+    {
+        fprintf(stderr, "unknown command...\n");
+        basicInfo();
+        exit(-1);
+    }
+    return 0;
+}
+
+int setCaches(void)
+{
 	if(getExecutablePath(exe)<0){
 		fprintf(stderr,"cannot configure current path ...\n");
 		workbookInfo();
@@ -32,16 +59,5 @@ int main(int argc, char *argv[])
         sprintf(archives,"%s/../.ejs/archives",exe);
 	}
 
-    if (!strncmp(command, "workbook", 8))
-    {
-        fprintf(stderr, "workbook : ");
-        return workbook(argc, argv);
-    }
-    else
-    {
-        fprintf(stderr, "unknown command...\n");
-        basicInfo();
-        exit(-1);
-    }
     return 0;
 }

@@ -238,7 +238,7 @@ exception:
     return -1;
 }
 
-
+// from stackOverflow
 void sleep_ms(int milliseconds){ // cross-platform sleep function
 #ifdef WIN32
     Sleep(milliseconds);
@@ -252,4 +252,61 @@ void sleep_ms(int milliseconds){ // cross-platform sleep function
       sleep(milliseconds / 1000);
     usleep((milliseconds % 1000) * 1000);
 #endif
+}
+
+// from GPT-4.0
+int remove_directory(const char *path) 
+{
+    DIR *d = opendir(path);
+    size_t path_len = strlen(path);
+    int r = -1;
+
+    if(!d)
+        goto exit;
+
+    struct dirent *p;
+    r = 0;
+
+    while (!r && (p = readdir(d))) {
+        int r2 = -1;
+        char *buf;
+        size_t len;
+
+        // Skip the names "." and ".." as we don't want to recurse on them.
+        if (!strcmp(p->d_name, ".") || !strcmp(p->d_name, ".."))
+            continue;
+
+        len = path_len + strlen(p->d_name) + 2; 
+        buf = malloc(len);
+
+        if(!buf){
+            r = r2;
+            continue;
+        }
+
+        struct stat statbuf;
+        snprintf(buf, len, "%s/%s", path, p->d_name);
+        if(stat(buf,&statbuf)){
+            free(buf);
+            r = r2;
+            continue;
+        }
+        
+        if (S_ISDIR(statbuf.st_mode)) 
+            r2 = remove_directory(buf);
+        else
+            r2 = remove(buf);
+
+        free(buf);
+        r = r2;
+    }
+
+    closedir(d);
+
+exit:
+    if (!r) {
+        r = rmdir(path);
+    }
+
+    return r;
 }

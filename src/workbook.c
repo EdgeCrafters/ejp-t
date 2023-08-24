@@ -1,5 +1,6 @@
 #include "common.h" 
 
+int deleteRepo(char home[], char repoName[]);
 int deleteProblem(char home[], char repoName[], char problemName[]);
 int updateProblem(char home[], char repoName[], char problemDir[], char problemName[]);
 int makeProblem(char home[], char repoName[], char problemDir[]);
@@ -8,17 +9,18 @@ int initRepo(const char home[], const char repoName[]);
 // delete an additional problem in repo
 static int delete(int argc, char *argv[])
 {
-	char home[VALUESIZE] , problemName[VALUESIZE], repoName[VALUESIZE];
+	char home[VALUESIZE] , problemName[VALUESIZE] = {'\0'}, repoName[VALUESIZE] = {'\0'};
 	char *values[] = {home,problemName,repoName};
 	char *cache[] = {homeCache,NULL,NULL};
 	
 	fprintf(stderr,"delete : ");
-	if(parseOpt(argc,argv,"h:p:r:",3,values,cache)<3){
+	if(parseOpt(argc,argv,"h:p:r:",3,values,cache)<2){
 		fprintf(stderr,"Missing opts...\n");
 		exit(EXIT_FAILURE);
-	}
-
-	deleteProblem(home, repoName, problemName);
+	}else if(problemName[0] && repoName[0])
+		deleteProblem(home, repoName, problemName);
+	else if(repoName[0])
+		deleteRepo(home, repoName);
 
 	return 0;
 }

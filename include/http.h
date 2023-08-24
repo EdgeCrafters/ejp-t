@@ -14,6 +14,7 @@ int logoutHTTP(const char home[]);
 int initRepoHTTP(const char home[], const char repoID[], char buffer[], size_t bufSize);
 int createProblemHTTP(const char home[], const char repoID[], char title[], char description[], char buffer[]);
 int deleteProblemHTTP(const char home[], const char problemID[]);
+int deleteRepoHTTP(const char home[], const char repoID[]);
 int updateProblemHTTP(const char home[], const char problemID[], char title[], char description[]);
 int uploadHiddencasesHTTP(const char home[], const char repoID[], const char problemID[], const char input[], const char output[]);
 int uploadFileHTTP(const char home[], const char problemID[], const char path[]);

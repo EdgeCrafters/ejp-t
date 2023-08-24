@@ -322,6 +322,61 @@ int updateProblemHTTP(const char home[], const char problemID[], char title[], c
     return 0;
 }
 
+int deleteRepoHTTP(const char home[], const char repoID[])
+{
+    char url[URLSIZE],payload[STRSIZE];
+    CURL *curl;
+    CURLcode res;
+    struct curl_slist *list = NULL;
+    long stat;
+
+    memset(url, 0, URLSIZE);
+    sprintf(url, "%s/repos/%s", home, repoID);
+
+    curl = curl_easy_init();
+
+    if (curl)
+    {
+        curl_easy_setopt(curl, CURLOPT_URL, url);
+        curl_easy_setopt(curl, CURLOPT_PORT, 4000L);
+
+        curl_easy_setopt(curl, CURLOPT_CUSTOMREQUEST, "DELETE");
+        curl_easy_setopt(curl, CURLOPT_CONNECTTIMEOUT, 5L);
+
+        curl_easy_setopt(curl, CURLOPT_COOKIEFILE, cookie);
+        list = curl_slist_append(list, "Content-Type: application/json");
+        curl_easy_setopt(curl, CURLOPT_HTTPHEADER, list);
+
+        char response[BUFSIZE];
+        writeidx = 0;
+        curl_easy_setopt(curl, CURLOPT_WRITEDATA, response);
+        curl_easy_setopt(curl, CURLOPT_WRITEFUNCTION, plainWrite);
+
+        res = curl_easy_perform(curl);
+
+        if (res != CURLE_OK)
+            return -1;
+
+        curl_easy_getinfo(curl, CURLINFO_HTTP_CODE, &stat);
+        if (stat == 401){
+            curl_easy_cleanup(curl);
+            userLogin(home);
+            return deleteProblemHTTP(home,repoID);
+        } else if (stat != 200){
+            fprintf(stderr, "Error on connection... (message : %s)\n", response);
+            return -1;
+        }
+
+        curl_easy_cleanup(curl);
+    }
+    else
+    {
+        fprintf(stderr, "Error on curl...\n");
+    }
+
+    return 0;
+}
+
 int deleteProblemHTTP(const char home[], const char problemID[])
 {
     char url[URLSIZE],payload[STRSIZE];
@@ -503,7 +558,6 @@ int uploadFileHTTP(const char home[], const char problemID[], const char path[])
         }
 
         curl_easy_cleanup(curl);
-        fprintf(stderr,"response : %s\n",response);
     }
     else
     {

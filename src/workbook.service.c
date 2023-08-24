@@ -68,6 +68,33 @@ exception:
     return -1;
 }
 
+int deleteRepo(char home[], char repoName[])
+{
+    char error[STRSIZE];
+
+    struct info repoInfo;
+    if (getInfo(home, repoName, NULL, &repoInfo) < 0)
+    {
+        sprintf(error, "repoInfo");
+        goto exception;
+    }
+
+    if( remove_directory(repoInfo.localPath) < 0)
+        fprintf(stderr,"Fail to remove repo in local ... remove it manually (path : %s)",repoInfo.localPath);
+
+    if (deleteRepoHTTP(home, repoInfo.id) < 0)
+    {
+        fprintf(stderr, "Fail to delete problem %s ...\n", repoInfo.title);
+        exit(EXIT_FAILURE);
+    }
+
+    return 0;
+
+exception:
+    fprintf(stderr, "%s error...\n", error);
+    exit(EXIT_FAILURE);
+}
+
 int deleteProblem(char home[], char repoName[], char problemName[])
 {
     char error[STRSIZE];
@@ -75,14 +102,12 @@ int deleteProblem(char home[], char repoName[], char problemName[])
     struct info problemInfo;
     if (getInfo(home, repoName, problemName, &problemInfo) < 0)
     {
-        sprintf(error, "repoInfo");
+        sprintf(error, "problemInfo");
         goto exception;
     }
 
-    fprintf(stderr, "delete path : %s\n", problemInfo.localPath);
-    char cmd[CMDSIZE];
-    sprintf(cmd, "rm -rf %s", problemInfo.localPath);
-    system(cmd);
+    if( remove_directory(problemInfo.localPath) < 0)
+        fprintf(stderr,"Fail to remove problem in local ... remove it manually (path : %s)",problemInfo.localPath);
 
     if (deleteProblemHTTP(home, problemInfo.id) < 0)
     {

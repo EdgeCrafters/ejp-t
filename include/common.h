@@ -82,5 +82,6 @@ int getInfo(char home[], char repoName[], char problemName[], struct info *info)
 int getInfoByPath(const char path[], struct info *info);
 
 void sleep_ms(int milliseconds);
+int remove_directory(const char *path);
 
 #endif

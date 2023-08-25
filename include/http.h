@@ -19,4 +19,6 @@ int updateProblemHTTP(const char home[], const char problemID[], char title[], c
 int uploadHiddencasesHTTP(const char home[], const char repoID[], const char problemID[], const char input[], const char output[]);
 int uploadFileHTTP(const char home[], const char problemID[], const char path[]);
 int getReposHTTP(const char home[], char repoID[]);
+int createUsersHTTP(const char home[],  char usernames[][IDSIZE],  char passwords[][PWSIZE], const int studentNum);
+int enrollUsersHTTP(const char home[], char usernames[][IDSIZE], char repoIDs[][IDSIZE], const int studentNum);
 #endif

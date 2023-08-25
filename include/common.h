@@ -38,6 +38,8 @@
 
 #define MAXTC 100
 
+#define MAXSTUDENT 100
+
 enum type {problem, repo, testcase};
 
 struct tcInfo

@@ -18,4 +18,5 @@ int deleteRepoHTTP(const char home[], const char repoID[]);
 int updateProblemHTTP(const char home[], const char problemID[], char title[], char description[]);
 int uploadHiddencasesHTTP(const char home[], const char repoID[], const char problemID[], const char input[], const char output[]);
 int uploadFileHTTP(const char home[], const char problemID[], const char path[]);
+int getReposHTTP(const char home[], char repoID[]);
 #endif

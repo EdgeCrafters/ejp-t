@@ -66,8 +66,9 @@ struct problemTestcase
 
 extern char exe[PATHSIZE];
 extern char homeCache[PATHSIZE];
-extern char problemLocationCache[PATHSIZE];
-extern char wbLocationCache[PATHSIZE];
+extern char repoCache[PATHSIZE];
+extern char problemCache[PATHSIZE];
+extern char locationCache[PATHSIZE];
 extern char cookie[PATHSIZE];
 extern char repos[PATHSIZE];
 extern char archives[PATHSIZE];

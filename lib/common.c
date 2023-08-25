@@ -14,12 +14,10 @@ int parseOpt(int argc, char *argv[], const char targetOpt[], const int optNum,
                 strcpy(optArg[i], optarg);
                 result += 1;
             }
-            else if (c == '?' && optopt == targetOpt[i])
+            else if (c == '?' && optopt == targetOpt[2 * i])
             {
-                fprintf(stderr, "Option -%c requires \
-						an argument.\n",
-                        optopt);
-                exit(EXIT_FAILURE);
+                optArg[i][0] = '\0';
+                result += 1;
             }
 
     for (int i = 0; i < optNum; ++i)
@@ -28,7 +26,7 @@ int parseOpt(int argc, char *argv[], const char targetOpt[], const int optNum,
             int cache;
             if ((cache = open(caches[i], O_WRONLY | O_CREAT | O_TRUNC, S_IRWXO | S_IRWXU)) < 0)
                 goto cacheException;
-            else if (write(cache, optArg[i], strlen(optArg[i])) < 0)
+            else if (write(cache, optArg[i], strlen(optArg[i])+1) < 0)
             {
                 close(cache);
                 goto cacheException;
@@ -38,11 +36,8 @@ int parseOpt(int argc, char *argv[], const char targetOpt[], const int optNum,
         else if (caches[i])
         {
             int cache;
-            char buf[BUFSIZE];
-            if ((cache = open(caches[i], O_RDONLY)) < 0 || read(cache, buf, BUFSIZE) < 0)
+            if ((cache = open(caches[i], O_RDONLY)) < 0 || read(cache, optArg[i], BUFSIZE) < 0)
                 goto exception;
-
-            strcpy(optArg[i], buf);
             ++result;
         }
 

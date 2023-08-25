@@ -2,8 +2,9 @@
 
 char exe[PATHSIZE];
 char homeCache[PATHSIZE];
-char problemLocationCache[PATHSIZE];
-char wbLocationCache[PATHSIZE];
+char repoCache[PATHSIZE];
+char problemCache[PATHSIZE];
+char locationCache[PATHSIZE];
 char archives[PATHSIZE];
 char repos[PATHSIZE];
 
@@ -51,9 +52,10 @@ int setCaches(void)
 		workbookInfo();
 		exit(-1);
 	}else{
-		sprintf(homeCache,"%s/../.ejs/cache/home.txt",exe);
-		sprintf(problemLocationCache,"%s/../.ejs/cache/problemLocation.txt",exe);
-		sprintf(wbLocationCache,"%s/../.ejs/cache/wbLocation.txt",exe);
+		sprintf(homeCache,"%s/../.ejs/cache/home.txt",exe);		
+        sprintf(repoCache,"%s/../.ejs/cache/repo.txt",exe);
+		sprintf(problemCache,"%s/../.ejs/cache/problem.txt",exe);
+		sprintf(locationCache,"%s/../.ejs/cache/location.txt",exe);
 		sprintf(cookie,"%s/../.ejs/cache/cookie.txt",exe);
 		sprintf(repos,"%s/../.ejs/repos",exe);
         sprintf(archives,"%s/../.ejs/archives",exe);

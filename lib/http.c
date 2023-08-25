@@ -523,6 +523,7 @@ int uploadFileHTTP(const char home[], const char problemID[], const char path[])
 
         curl_easy_setopt(curl, CURLOPT_COOKIEFILE, cookie);
         list = curl_slist_append(list, "Content-Type: multipart/form-data");
+        list = curl_slist_append(list, "Accept-Encoding: gzip, deflate, br");
         curl_easy_setopt(curl, CURLOPT_HTTPHEADER, list);
 
         curl_mime *form = NULL;
@@ -533,6 +534,7 @@ int uploadFileHTTP(const char home[], const char problemID[], const char path[])
         field = curl_mime_addpart(form);
         curl_mime_name(field, "file");
         curl_mime_filedata(field, path);
+        curl_mime_type(field, "application/x-tar"); 
 
         curl_easy_setopt(curl, CURLOPT_MIMEPOST, form);
 
@@ -565,4 +567,54 @@ int uploadFileHTTP(const char home[], const char problemID[], const char path[])
     }
 
     return 0;
+}
+
+int getReposHTTP(const char home[], char repoID[]) {
+	char url[URLSIZE], response[BUFSIZE];
+	CURL *curl;
+	CURLcode res;
+	struct curl_slist *list = NULL;
+	long stat;
+
+	memset(url, 0, URLSIZE);
+	sprintf(url, "%s/repos/%s", home, repoID);
+
+	curl = curl_easy_init();
+
+	if (curl) {
+        curl_easy_setopt(curl, CURLOPT_URL, url);
+        curl_easy_setopt(curl, CURLOPT_PORT, 4000L);
+
+        curl_easy_setopt(curl, CURLOPT_HTTPGET, 1L);
+        curl_easy_setopt(curl, CURLOPT_CONNECTTIMEOUT, 5000L);
+
+        curl_easy_setopt(curl, CURLOPT_COOKIEFILE, cookie);
+		list = curl_slist_append(list, "Accept: */*");
+        list = curl_slist_append(list, "Content-Type: application/json");
+        curl_easy_setopt(curl, CURLOPT_HTTPHEADER, list);
+
+        // char response[BUFSIZE];
+        // writeidx = 0;
+        // curl_easy_setopt(curl, CURLOPT_WRITEDATA, response);
+        // curl_easy_setopt(curl, CURLOPT_WRITEFUNCTION, plainWrite);
+
+		res = curl_easy_perform(curl);
+		if (res != CURLE_OK) {
+			return -1;
+		}
+        
+        curl_easy_getinfo(curl, CURLINFO_HTTP_CODE, &stat);
+        if(stat == 401){
+            fprintf(stderr,"response : %s\n",response);
+            curl_easy_cleanup(curl);
+            userLogin(home);
+            return getReposHTTP(home,repoID);
+        } 
+
+		curl_easy_cleanup(curl);
+	} else {
+		return -1;
+	}
+
+	return 0;
 }

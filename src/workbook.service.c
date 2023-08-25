@@ -79,14 +79,14 @@ int deleteRepo(char home[], char repoName[])
         goto exception;
     }
 
-    if( remove_directory(repoInfo.localPath) < 0)
-        fprintf(stderr,"Fail to remove repo in local ... remove it manually (path : %s)",repoInfo.localPath);
-
     if (deleteRepoHTTP(home, repoInfo.id) < 0)
     {
-        fprintf(stderr, "Fail to delete problem %s ...\n", repoInfo.title);
+        fprintf(stderr, "Fail to delete problem in local %s ...\n", repoInfo.title);
         exit(EXIT_FAILURE);
     }
+
+    if(remove_directory(repoInfo.localPath) < 0)
+        fprintf(stderr,"Fail to remove repo in local ... remove it manually (path : %s)",repoInfo.localPath);
 
     return 0;
 
@@ -223,4 +223,40 @@ int makeProblem(char home[], char repoName[], char problemDir[])
 exception:
     fprintf(stderr, "%s error...\n", error);
     exit(EXIT_FAILURE);
+}
+
+
+int makeTestcase(char home[], char repoName[], char problemName[], char testcase[])
+{
+    char error[ERRORISZE];
+
+    struct problemTestcase testcases = {.num = 0};
+    encode(NULL,testcase,NULL,NULL,NULL, &testcases);
+
+    struct info repoInfo;
+    getInfo(home,repoName,NULL,&repoInfo);
+    struct info problemInfo;
+    getInfo(home,repoName,problemName,&problemInfo);
+    if(uploadHiddencasesHTTP(home,repoInfo.id,problemInfo.id,testcases.input[0],testcases.output[0])){
+        sprintf(error,"uploadHiddencasesHTTP");
+        goto exception;
+    }
+
+    return 0;
+
+exception:
+    fprintf(stderr, "%s error...\n", error);
+    exit(EXIT_FAILURE);
+}
+
+int deleteTestcases(char home[], char repoName[], char problemName[], int testcases[], const int num)
+{
+    struct info repoInfo;
+    getInfo(home,repoName,NULL,&repoInfo);
+    struct info problemInfo;
+    getInfo(home,repoName,problemName,&problemInfo);
+    // getReposHTTP(home,repoInfo.id);
+
+    
+    return 0;
 }

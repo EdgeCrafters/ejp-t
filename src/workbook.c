@@ -2,7 +2,7 @@
 
 int deleteRepo(char home[], char repoName[]);
 int deleteProblem(char home[], char repoName[], char problemName[]);
-int deleteTestcases(char home[], char repoName[], char problemName[], int testcases[], const int num);
+int deleteTestcases(char home[], char repoName[], char problemName[]);
 int makeProblem(char home[], char repoName[], char problemDir[]);
 int makeTestcase(char home[], char repoName[], char problemName[], char testcase[]);
 int initRepo(const char home[], const char repoName[]);
@@ -19,14 +19,9 @@ static int delete(int argc, char *argv[])
 	if(opts<2){
 		fprintf(stderr,"Missing opts...\n");
 		exit(EXIT_FAILURE);
-	}else if(opts == 4){
-		fprintf(stderr,"Enter testcases' id to delete (seperate with space, press enter) : ");
-		int testcases[VALUESIZE] = {0}, i = 0;
-		do
-			scanf("%d",&testcases[i++]);
-		while(getchar()!='\n' && i < VALUESIZE);
-		deleteTestcases(home,repoName,problemName,testcases, i);
-	}else if(problemName[0] && repoName[0])
+	}else if(opts == 4)
+		deleteTestcases(home,repoName,problemName);
+	else if(problemName[0] && repoName[0])
 		deleteProblem(home, repoName, problemName);
 	else if(repoName[0])
 		deleteRepo(home, repoName);

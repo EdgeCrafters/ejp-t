@@ -5,6 +5,10 @@ int createUser(const char home[], const char username[], const char password[]);
 int createUsers(const char home[], const char location[]);
 int enrollUser(const char home[], const char username[], const char repoName[]);
 int enrollUsers(const char home[], const char location[]);
+int  userProblemScore(const char home[],const char repoName[],const char problemName[],const char userName[]);
+int  userRepoScore(const char home[],const char repoName[],const char userName[]);
+int  problemScore(const char home[],const char repoName[],const char problemName[]);
+int  repoScore(const char home[],const char repoName[]);
 
 static int list(int argc, char*argv[])
 {
@@ -36,6 +40,26 @@ exception:
 static int score(int argc, char*argv[])
 {
     char error[ERRORISZE];
+
+    char home[VALUESIZE]={0},userName[VALUESIZE]={0},repoName[VALUESIZE]={0},problemName[VALUESIZE]={0};
+    char *values[] = {home, userName, repoName,problemName};
+    char *cache[] = {homeCache,NULL,repoCache,NULL};
+
+    fprintf(stderr,"enroll : ");
+    int opts = parseOpt(argc,argv,"h:u:r:p:",4,values,cache);
+    if(!home[0] || !repoName[0]){
+        sprintf(error,"missing opts");
+        goto exception;
+    }
+
+    if(userName[0]&&problemName[0])
+        userProblemScore(home,repoName,problemName,userName);
+    else if(userName[0])
+        userRepoScore(home,repoName,userName);
+    else if(problemName[0])
+        problemScore(home,repoName,problemName);
+    else
+        repoScore(home,repoName);
 
     return 0;
 

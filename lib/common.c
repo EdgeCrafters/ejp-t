@@ -16,6 +16,7 @@ int parseOpt(int argc, char *argv[], const char targetOpt[], const int optNum,
             }
             else if (c == '?' && optopt == targetOpt[2 * i])
             {
+                flags[i] = 1;
                 optArg[i][0] = '\0';
                 result += 1;
             }

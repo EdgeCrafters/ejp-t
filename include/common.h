@@ -34,10 +34,9 @@
 
 #define IDSIZE 16
 #define PWSIZE 16
+
 #define MAXOPT 16
-
 #define MAXTC 100
-
 #define MAXSTUDENT 100
 
 enum type {problem, repo, testcase};

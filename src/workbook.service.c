@@ -249,14 +249,74 @@ exception:
     exit(EXIT_FAILURE);
 }
 
-int deleteTestcases(char home[], char repoName[], char problemName[], int testcases[], const int num)
+int deleteTestcases(char home[], char repoName[], char problemName[])
 {
     struct info repoInfo;
     getInfo(home,repoName,NULL,&repoInfo);
     struct info problemInfo;
     getInfo(home,repoName,problemName,&problemInfo);
-    // getReposHTTP(home,repoInfo.id);
+
+    cJSON *response = NULL;
+    if(getReposHTTP(home,repoInfo.id, &response)<0 || !response){
+        fprintf(stderr,"fail to get repo info...");
+        return -1;
+    }
+
+    cJSON *problemArray = cJSON_GetObjectItem(response,"Problem");
+    if(!problemArray){
+        fprintf(stderr,"fail to get problem array...");
+        return -1;
+    }else if(cJSON_GetArraySize(problemArray) < 1){
+        fprintf(stderr,"no such problem...");
+    }
+
+    cJSON *problemJson = cJSON_GetArrayItem(problemArray,0);
+    if(!problemJson){
+        fprintf(stderr,"fail to get problem info...");
+        return -1;
+    }
+    
+    cJSON *testcaseArray = cJSON_GetObjectItem(problemJson,"testCase");
+    if(!testcaseArray){
+        fprintf(stderr,"fail to get testcase array...");
+        return -1;
+    }
 
     
+    fprintf(stderr, "Testcase List:\n");
+    fprintf(stderr, "%-10s | %-30s | %s\n", "ID", "Input (First 30 chars)", "Is Hidden");
+
+    cJSON *testcase;
+    int tcsize = cJSON_GetArraySize(problemArray), i = 0;
+    for(testcase = cJSON_GetArrayItem(testcaseArray, i); 
+        testcase; 
+        testcase = cJSON_GetArrayItem(testcaseArray, ++i)) {
+
+        int id = cJSON_GetObjectItem(testcase, "id")->valueint;
+        char input[VALUESIZE] = {0}, isHidden[VALUESIZE] = {0};
+        strncpy(input, cJSON_GetObjectItem(testcase, "input")->valuestring, VALUESIZE - 1);
+        strncpy(isHidden, cJSON_GetObjectItem(testcase, "isHidden")->valuestring, VALUESIZE - 1);
+
+        fprintf(stderr, "%-10d | %-30s | %s\n", id, input, isHidden);
+    }
+    
+    fprintf(stderr,"Enter testcases' id to delete (seperate with space, press enter) : ");
+    int testcases[VALUESIZE] = {0};
+    i = 0;
+    do
+        scanf("%d",&testcases[i++]);
+    while(getchar()!='\n' && i < VALUESIZE);
+
+    cJSON *targets = cJSON_CreateIntArray(testcases,i);
+    if(!targets){
+        fprintf(stderr,"unexcpected error...");
+        return -1;
+    }
+
+    if(deleteTestcasesHTTP(home,repoInfo.id,targets)<0){
+        fprintf(stderr,"fail to delte testcase...");
+        return -1;
+    }
+
     return 0;
 }

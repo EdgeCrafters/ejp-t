@@ -150,7 +150,8 @@ int enrollUsers(const char home[], const char location[])
         
         if((token = strtok(NULL,","))){
             size_t tokenLength = strlen(token);
-            token[tokenLength-1] = '\0';
+            if(token[tokenLength-1] == '\r' || token[tokenLength-1] == '\n')
+                token[tokenLength-1] = '\0';
 
             struct info repoInfo;
             getInfo(home,token,NULL,&repoInfo);
@@ -173,5 +174,86 @@ exception:
 }
 
 
+int  userProblemScore(const char home[],const char repoName[],const char problemName[],const char userName[])
+{
+    char error[ERRORISZE];
+
+    struct info repoInfo;
+    getInfo(home,repoName,NULL,&repoInfo);
+    struct info problemInfo;
+    getInfo(home,repoName,problemName,&problemInfo);
+
+    if(userProblemScoreHTTP(home,repoInfo.id,problemInfo.id,userName)<0){
+        sprintf(error,"fail to get user problem score");
+        goto exception;
+    }
+
+    return 0;
+
+exception:
+    fprintf(stderr,"%s error...", error);
+    return -1;
+}
+
+int  userRepoScore(const char home[],const char repoName[],const char userName[])
+{
+    char error[ERRORISZE];
+
+    struct info repoInfo;
+    getInfo(home,repoName,NULL,&repoInfo);
+
+    // if(userRepoScoreHTTP(home,repoInfo.id,userName)<0){
+    //     sprintf(error,"fail to get user workbook socre");
+    //     goto exception;
+    // }
+
+    return 0;
+
+exception:
+    fprintf(stderr,"%s error...", error);
+    return -1;
+}
+
+int  problemScore(const char home[],const char repoName[],const char problemName[])
+{
+    char error[ERRORISZE];
+
+    struct info repoInfo;
+    getInfo(home,repoName,NULL,&repoInfo);
+    struct info problemInfo;
+    getInfo(home,repoName,problemName,&problemInfo);
+
+    // if(problemScoreHTTP(home,repoInfo.id,problemInfo.id)<0){
+    //     sprintf(error,"fail to get problem score ...");
+    //     goto exception;
+    // }
+
+    return 0;
+
+exception:
+    fprintf(stderr,"%s error...", error);
+    return -1;
+}
+
+int  repoScore(const char home[],const char repoName[])
+{
+    char error[ERRORISZE];
+
+    struct info repoInfo;
+    getInfo(home,repoName,NULL,&repoInfo);
+    struct info problemInfo;
+    // getInfo(home,repoName,NULL,&problemInfo);
+
+    // if(repoScoreHTTP(home,repoInfo.id)<0){
+    //     sprintf(error,"fail to get repo score ...");
+    //     goto exception;
+    // }
+
+    return 0;
+
+exception:
+    fprintf(stderr,"%s error...", error);
+    return -1;
+}
 
 

@@ -45,7 +45,7 @@ static int score(int argc, char*argv[])
     char *values[] = {home, userName, repoName,problemName};
     char *cache[] = {homeCache,NULL,repoCache,NULL};
 
-    fprintf(stderr,"enroll : ");
+    fprintf(stderr,"score : ");
     int opts = parseOpt(argc,argv,"h:u:r:p:",4,values,cache);
     if(!home[0] || !repoName[0]){
         sprintf(error,"missing opts");

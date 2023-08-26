@@ -749,7 +749,7 @@ int enrollUsersHTTP(const char home[], char usernames[][IDSIZE], char repoIDs[][
 	return 0;
 }
 
-int userProblemScoreHTTP(const char home[], const char repoID[], const char problemID[],const char userName[]) 
+int userProblemScoreHTTP(const char home[], const char repoID[], const char problemID[],const char userName[], cJSON **responseJson) 
 {
 	char url[URLSIZE], response[BUFSIZE];
 	CURL *curl;
@@ -774,10 +774,10 @@ int userProblemScoreHTTP(const char home[], const char repoID[], const char prob
         list = curl_slist_append(list, "Content-Type: application/json");
         curl_easy_setopt(curl, CURLOPT_HTTPHEADER, list);
 
-        // char response[BUFSIZE];
-        // writeidx = 0;
-        // curl_easy_setopt(curl, CURLOPT_WRITEDATA, response);
-        // curl_easy_setopt(curl, CURLOPT_WRITEFUNCTION, plainWrite);
+        char response[BUFSIZE];
+        writeidx = 0;
+        curl_easy_setopt(curl, CURLOPT_WRITEDATA, response);
+        curl_easy_setopt(curl, CURLOPT_WRITEFUNCTION, plainWrite);
 
 		res = curl_easy_perform(curl);
 		if (res != CURLE_OK) {
@@ -788,13 +788,15 @@ int userProblemScoreHTTP(const char home[], const char repoID[], const char prob
         if(stat == 401){
             curl_easy_cleanup(curl);
             userLogin(home);
-            return userProblemScoreHTTP(home,repoID,problemID,userName);
-        } else if (stat != 201){
+            return userProblemScoreHTTP(home,repoID,problemID,userName,responseJson);
+        } else if (stat != 200){
             fprintf(stderr, "Error on connection... %s at %s\n", response,url);
             return -1;
         }
 
 		curl_easy_cleanup(curl);
+
+        *responseJson = cJSON_Parse(response);
 	} else {
 		return -1;
 	}

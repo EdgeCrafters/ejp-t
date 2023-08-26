@@ -84,7 +84,8 @@ int createUsers(const char home[], const char location[])
         
         if((token = strtok(NULL,","))){
             size_t tokenLength = strlen(token);
-            token[tokenLength-1] = '\0';
+            if(token[tokenLength-1] == '\r' || token[tokenLength-1] == '\n')
+                token[tokenLength-1] = '\0';
             strncpy(passwords[recordCount++],token,PWSIZE);
         }
     }
@@ -102,7 +103,6 @@ exception:
     fprintf(stderr,"%s error...", error);
     return -1;
 }
-
 
 int enrollUser(const char home[], const char username[], const char repoName[])
 {
@@ -173,7 +173,6 @@ exception:
     return -1;
 }
 
-
 int  userProblemScore(const char home[],const char repoName[],const char problemName[],const char userName[])
 {
     char error[ERRORISZE];
@@ -183,10 +182,24 @@ int  userProblemScore(const char home[],const char repoName[],const char problem
     struct info problemInfo;
     getInfo(home,repoName,problemName,&problemInfo);
 
-    if(userProblemScoreHTTP(home,repoInfo.id,problemInfo.id,userName)<0){
+    cJSON *response = NULL;
+    if(userProblemScoreHTTP(home,repoInfo.id,problemInfo.id,userName,&response)<0){
         sprintf(error,"fail to get user problem score");
         goto exception;
+    }else if(!response){
+        sprintf(error,"fail to parse user problem score");
+        goto exception;
     }
+
+    cJSON *pass = cJSON_GetObjectItem(response,"pass");
+    cJSON *total = cJSON_GetObjectItem(response,"total");
+    if(!pass||!total){
+        sprintf(error,"unexpected");
+        goto exception;
+    }
+
+    fprintf(stderr, "\n%-20s | %-20s | %10s | %10s|\n", "Username", "Problem", "Passed", "Total");
+    fprintf(stderr, "%-20s | %-20s | %10d | %10d|\n", userName, problemName, pass->valueint, total->valueint);
 
     return 0;
 
@@ -255,5 +268,3 @@ exception:
     fprintf(stderr,"%s error...", error);
     return -1;
 }
-
-

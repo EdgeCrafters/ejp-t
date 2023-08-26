@@ -23,4 +23,6 @@ int createUsersHTTP(const char home[],  char usernames[][IDSIZE],  char password
 int enrollUsersHTTP(const char home[], char usernames[][IDSIZE], char repoIDs[][IDSIZE], const int studentNum);
 int deleteTestcasesHTTP(const char home[], const char repoID[], cJSON *testcases);
 int userProblemScoreHTTP(const char home[], const char repoID[], const char problemID[],const char userName[], cJSON **responseJson);
+int userRepoScoreHTTP(const char home[], const char repoID[],const char userName[], cJSON **responseJson);
+int problemScoreHTTP(const char home[], const char repoID[],const char problemID[],cJSON **responseJson); 
 #endif

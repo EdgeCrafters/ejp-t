@@ -215,10 +215,32 @@ int  userRepoScore(const char home[],const char repoName[],const char userName[]
     struct info repoInfo;
     getInfo(home,repoName,NULL,&repoInfo);
 
-    // if(userRepoScoreHTTP(home,repoInfo.id,userName)<0){
-    //     sprintf(error,"fail to get user workbook socre");
-    //     goto exception;
-    // }
+    cJSON *response = NULL;
+    if(userRepoScoreHTTP(home,repoInfo.id,userName,&response)<0){
+        sprintf(error,"fail to get user repo score");
+        goto exception;
+    }else if(!response){
+        sprintf(error,"fail to parse user repo score");
+        goto exception;
+    }    
+    
+    int i = 0;
+    fprintf(stderr,"\nRepo : %s\n",repoInfo.title);
+    fprintf(stderr, "%-20s | %-20s | %10s | %10s|\n", "Username", "Problem", "Passed", "Total");
+    for(cJSON *score = cJSON_GetArrayItem(response,i);
+        score;
+        score = cJSON_GetArrayItem(response,++i)){
+        cJSON *pass = cJSON_GetObjectItem(score,"pass");
+        cJSON *total = cJSON_GetObjectItem(score,"total");
+        cJSON *problemName = cJSON_GetObjectItem(score,"problemName");
+        if(!pass||!total){
+            sprintf(error,"unexpected");
+            goto exception;
+        }
+
+        fprintf(stderr, "%-20s | %-20s | %10d | %10d|\n", userName, problemName->valuestring, pass->valueint, total->valueint);
+    }
+
 
     return 0;
 
@@ -236,10 +258,22 @@ int  problemScore(const char home[],const char repoName[],const char problemName
     struct info problemInfo;
     getInfo(home,repoName,problemName,&problemInfo);
 
-    // if(problemScoreHTTP(home,repoInfo.id,problemInfo.id)<0){
-    //     sprintf(error,"fail to get problem score ...");
-    //     goto exception;
-    // }
+    cJSON *response = NULL;
+    if(problemScoreHTTP(home,repoInfo.id,problemInfo.id,&response)<0){
+        sprintf(error,"fail to get problem score");
+        goto exception;
+    }else if(!response){
+        sprintf(error,"fail to parse problem score");
+        goto exception;
+    }
+
+    cJSON *data = cJSON_GetObjectItem(response,"data");
+    if(!data){
+        sprintf(error,"fail to parse data");
+        goto exception;
+    }
+
+    //location
 
     return 0;
 

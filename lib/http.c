@@ -804,6 +804,116 @@ int userProblemScoreHTTP(const char home[], const char repoID[], const char prob
 	return 0;
 }
 
+int userRepoScoreHTTP(const char home[], const char repoID[],const char userName[], cJSON **responseJson) 
+{
+	char url[URLSIZE], response[BUFSIZE];
+	CURL *curl;
+	CURLcode res;
+	struct curl_slist *list = NULL;
+	long stat;
+
+	memset(url, 0, URLSIZE);
+	sprintf(url, "%s/submit/result/all/username/%s/reopId/%s", home, userName, repoID);
+
+	curl = curl_easy_init();
+
+	if (curl) {
+        curl_easy_setopt(curl, CURLOPT_URL, url);
+        curl_easy_setopt(curl, CURLOPT_PORT, 4000L);
+
+        curl_easy_setopt(curl, CURLOPT_HTTPGET, 1L);
+        curl_easy_setopt(curl, CURLOPT_CONNECTTIMEOUT, 5000L);
+
+        curl_easy_setopt(curl, CURLOPT_COOKIEFILE, cookie);
+		list = curl_slist_append(list, "Accept: */*");
+        list = curl_slist_append(list, "Content-Type: application/json");
+        curl_easy_setopt(curl, CURLOPT_HTTPHEADER, list);
+
+        char response[BUFSIZE];
+        writeidx = 0;
+        curl_easy_setopt(curl, CURLOPT_WRITEDATA, response);
+        curl_easy_setopt(curl, CURLOPT_WRITEFUNCTION, plainWrite);
+
+		res = curl_easy_perform(curl);
+		if (res != CURLE_OK) {
+			return -1;
+		}
+        
+        curl_easy_getinfo(curl, CURLINFO_HTTP_CODE, &stat);
+        if(stat == 401){
+            curl_easy_cleanup(curl);
+            userLogin(home);
+            return userRepoScoreHTTP(home,repoID,userName,responseJson);
+        } else if (stat != 200){
+            fprintf(stderr, "Error on connection... %s at %s\n", response,url);
+            return -1;
+        }
+
+		curl_easy_cleanup(curl);
+
+        *responseJson = cJSON_Parse(response);
+	} else {
+		return -1;
+	}
+
+	return 0;
+}
+
+int problemScoreHTTP(const char home[], const char repoID[],const char problemID[],cJSON **responseJson) 
+{
+	char url[URLSIZE], response[BUFSIZE];
+	CURL *curl;
+	CURLcode res;
+	struct curl_slist *list = NULL;
+	long stat;
+
+	memset(url, 0, URLSIZE);
+	sprintf(url, "%s/submit/result/all/problemId/%s/reopId/%s", home, problemID, repoID);
+
+	curl = curl_easy_init();
+
+	if (curl) {
+        curl_easy_setopt(curl, CURLOPT_URL, url);
+        curl_easy_setopt(curl, CURLOPT_PORT, 4000L);
+
+        curl_easy_setopt(curl, CURLOPT_HTTPGET, 1L);
+        curl_easy_setopt(curl, CURLOPT_CONNECTTIMEOUT, 5000L);
+
+        curl_easy_setopt(curl, CURLOPT_COOKIEFILE, cookie);
+		list = curl_slist_append(list, "Accept: */*");
+        list = curl_slist_append(list, "Content-Type: application/json");
+        curl_easy_setopt(curl, CURLOPT_HTTPHEADER, list);
+
+        char response[BUFSIZE];
+        writeidx = 0;
+        curl_easy_setopt(curl, CURLOPT_WRITEDATA, response);
+        curl_easy_setopt(curl, CURLOPT_WRITEFUNCTION, plainWrite);
+
+		res = curl_easy_perform(curl);
+		if (res != CURLE_OK) {
+			return -1;
+		}
+        
+        curl_easy_getinfo(curl, CURLINFO_HTTP_CODE, &stat);
+        if(stat == 401){
+            curl_easy_cleanup(curl);
+            userLogin(home);
+            return problemScoreHTTP(home,repoID,problemID,responseJson);
+        } else if (stat != 200){
+            fprintf(stderr, "Error on connection... %s at %s\n", response,url);
+            return -1;
+        }
+
+		curl_easy_cleanup(curl);
+
+        *responseJson = cJSON_Parse(response);
+	} else {
+		return -1;
+	}
+
+	return 0;
+}
+
 int deleteTestcasesHTTP(const char home[], const char repoID[], cJSON *testcases)
 {
     char url[URLSIZE],payload[STRSIZE];

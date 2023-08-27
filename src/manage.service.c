@@ -249,7 +249,7 @@ exception:
     return -1;
 }
 
-int  problemScore(const char home[],const char repoName[],const char problemName[])
+int  problemScore(const char home[],const char repoName[],const char problemName[], const char location[])
 {
     char error[ERRORISZE];
 
@@ -273,7 +273,18 @@ int  problemScore(const char home[],const char repoName[],const char problemName
         goto exception;
     }
 
-    //location
+    char resultPath[PATHSIZE]; sprintf(resultPath,"%s/%s-%s_score.csv",location,repoName,problemName);
+    int result = open(resultPath,O_WRONLY | O_TRUNC | O_CREAT, S_IRUSR | S_IWUSR);
+    if(result<0){
+        sprintf(error,"result : %s fail to create result csv file",data->valuestring);
+        goto exception;
+    }else if(write(result,data->valuestring,strlen(data->valuestring))<0){
+        sprintf(error,"result : %s fail to write result csv file",data->valuestring);
+        goto exception;
+    }
+
+    fprintf(stderr,"result file at %s ", resultPath);
+    close(result);
 
     return 0;
 
@@ -282,19 +293,30 @@ exception:
     return -1;
 }
 
-int  repoScore(const char home[],const char repoName[])
+int  repoScore(const char home[],const char repoName[], const char location[])
 {
     char error[ERRORISZE];
 
     struct info repoInfo;
     getInfo(home,repoName,NULL,&repoInfo);
-    struct info problemInfo;
-    // getInfo(home,repoName,NULL,&problemInfo);
 
-    // if(repoScoreHTTP(home,repoInfo.id)<0){
-    //     sprintf(error,"fail to get repo score ...");
-    //     goto exception;
-    // }
+    DIR *repoDir = opendir(repoInfo.localPath);
+    if(!repoDir){
+        sprintf(error,"fail to get repoInfo");
+        goto exception;
+    }
+
+    fprintf(stderr,"Repo %s scores : \n",repoName);
+    struct dirent *dent;
+	while((dent = readdir(repoDir))){
+		if(dent->d_type != DT_DIR || dent->d_name[0] == '.')
+			continue;
+
+        struct info problemInfo;
+        getInfo(home,repoName,dent->d_name,&problemInfo);
+        problemScore(home,repoName,problemInfo.title,location);
+        fprintf(stderr,"\n");
+    }
 
     return 0;
 

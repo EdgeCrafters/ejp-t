@@ -30,7 +30,7 @@
 #define PATHSIZE 512
 
 #define VALUESIZE 32
-#define ERRORISZE 32
+#define ERRORISZE 1024
 
 #define IDSIZE 16
 #define PWSIZE 16

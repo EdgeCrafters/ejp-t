@@ -1,24 +1,34 @@
 #include "common.h" 
 
+int deleteRepo(char home[], char repoName[]);
 int deleteProblem(char home[], char repoName[], char problemName[]);
-int updateProblem(char home[], char repoName[], char problemDir[], char problemName[]);
-int makeProblem(char home[], char repoName[], char problemDir[], char problemName[]);
+int deleteTestcases(char home[], char repoName[], char problemName[]);
+int makeProblem(char home[], char repoName[], char problemDir[]);
+int makeTestcase(char home[], char repoName[], char problemName[], char testcase[]);
 int initRepo(const char home[], const char repoName[]);
 
 // delete an additional problem in repo
 static int delete(int argc, char *argv[])
 {
-	char home[VALUESIZE] , problemName[VALUESIZE], repoName[VALUESIZE];
-	char *values[] = {home,problemName,repoName};
-	char *cache[] = {homeCache,NULL,NULL};
+	char home[VALUESIZE]={0},problemName[VALUESIZE] = {0},repoName[VALUESIZE] = {0},testcaseName[VALUESIZE] = {0};
+	char *values[] = {home,problemName,repoName,testcaseName};
+	char *cache[] = {homeCache,NULL,repoCache,NULL};
 	
 	fprintf(stderr,"delete : ");
-	if(parseOpt(argc,argv,"h:p:r:",3,values,cache)<3){
+	int opts = parseOpt(argc,argv,"h:p:r:t:",4,values,cache);
+	if(opts<2){
+		fprintf(stderr,"Missing opts...\n");
+		exit(EXIT_FAILURE);
+	}else if(opts == 4)
+		deleteTestcases(home,repoName,problemName);
+	else if(problemName[0] && repoName[0])
+		deleteProblem(home, repoName, problemName);
+	else if(repoName[0])
+		deleteRepo(home, repoName);
+	else{
 		fprintf(stderr,"Missing opts...\n");
 		exit(EXIT_FAILURE);
 	}
-
-	deleteProblem(home, repoName, problemName);
 
 	return 0;
 }
@@ -26,43 +36,23 @@ static int delete(int argc, char *argv[])
 //append an additional problem in repo
 static int append(int argc, char*argv[])
 {
-	char home[VALUESIZE] , location[VALUESIZE], repoName[VALUESIZE];
-	char *values[] = {home,location,repoName};
-	char *cache[] = {homeCache, problemLocationCache, NULL};
+	char home[VALUESIZE]={0},location[VALUESIZE]={0},repoName[VALUESIZE]={0},problemName[VALUESIZE]={0};
+	char *values[] = {home,location,repoName,problemName};
+	char *cache[] = {homeCache, locationCache, repoCache, NULL};
 	
 	fprintf(stderr,"append : ");
-	if(parseOpt(argc,argv,"h:l:r:",3,values,cache)<3){
+	int opts = parseOpt(argc,argv,"h:l:r:p:",4,values,cache);
+	if(opts<3){
+		fprintf(stderr,"Missing opts...\n");
+		exit(EXIT_FAILURE);
+	}else if(problemName[0] && repoName[0])
+		makeTestcase(home,repoName,problemName,location);
+	else if(repoName[0])
+		makeProblem(home, repoName, location);
+	else{
 		fprintf(stderr,"Missing opts...\n");
 		exit(EXIT_FAILURE);
 	}
-
-	char *problemName, *buf, *_location;
-	_location = strdup(location);
-	buf = strtok(_location,"/");
-	while(buf  != NULL){
-		problemName = strdup(buf);
-		buf = strtok(NULL, "/");
-	}
-	makeProblem(home, repoName, location, problemName);
-	free(_location);free(problemName);
-
-	return 0;
-}
-
-//update an exsiting testcase in repo
-static int update(int argc, char*argv[])
-{
-	char home[VALUESIZE] , location[VALUESIZE], repoName[VALUESIZE], problemName[VALUESIZE];
-	char *values[] = {home,location,repoName,problemName};
-	char *cache[] = {homeCache, problemLocationCache, NULL, NULL};
-	
-	fprintf(stderr,"update : ");
-	if(parseOpt(argc,argv,"h:l:r:p:",4,values,cache)<4){
-		fprintf(stderr,"Missing opts...\n");
-		exit(EXIT_FAILURE);
-	}
-
-	updateProblem(home,repoName,location,problemName);
 
 	return 0;
 }
@@ -78,7 +68,7 @@ static int create(int argc, char*argv[])
 	fprintf(stderr,"create : ");
 	char home[VALUESIZE] , location[VALUESIZE], repoName[VALUESIZE];
 	char *values[] = {home,location,repoName};
-	char *cache[] = {homeCache, wbLocationCache, NULL};
+	char *cache[] = {homeCache, locationCache, repoCache};
 	if(parseOpt(argc,argv,"h:l:r:",3,values,cache)<3){
 		fprintf(stderr,"Missing opts...\n");
 		exit(EXIT_FAILURE);
@@ -96,7 +86,7 @@ static int create(int argc, char*argv[])
 		if(dent->d_type == DT_DIR && dent->d_name[0] != '.')
 		{
 			sprintf(problem,"%s/%s",location,dent->d_name);
-			makeProblem(home,repoName,problem,dent->d_name);
+			makeProblem(home,repoName,problem);
 		}
 	closedir(workbookDir);
 
@@ -127,11 +117,6 @@ int workbook
 		}
 	}else if(!strncmp(command,"append",6)){
 		if(append(argc,argv)){
-			fprintf(stderr,"error...\n");
-			exit(-1);
-		}
-	}else if(!strncmp(command,"update",6)){
-		if(update(argc,argv)){
 			fprintf(stderr,"error...\n");
 			exit(-1);
 		}

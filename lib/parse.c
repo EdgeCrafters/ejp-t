@@ -1,6 +1,5 @@
 #include "parse.h"
 
-
 int cnvtNormal(int resultFile, char *inputContent, int inputSize)
 {
 	if(write(resultFile,inputContent,strlen(inputContent)) < 0)
@@ -67,33 +66,76 @@ exception:
 	return -1;
 }
 
+int cnvtWrapper(const int inputFile, const char resultFilePath[], char title[], char description[])
+{
+	char inputStr[STRSIZE];
+	read(inputFile, inputStr, STRSIZE);
+
+	int resultFile;
+	if((resultFile = open(resultFilePath, O_WRONLY|O_CREAT|O_TRUNC,S_IRWXO|S_IRWXU)) <0 )
+		return -1;
+	if(!title && !description && cnvtNormal(resultFile, inputStr, STRSIZE)<0)
+		fprintf(stderr," fail!\n");
+	else if(title && description && cnvtInfo(resultFile, inputStr, STRSIZE, title, description)<0)
+		fprintf(stderr," fail!\n");
+	else
+		fprintf(stderr," done!\n");
+
+	close(inputFile);
+	close(resultFile);
+
+	return 0;
+}
+
 int encode(char resultPath[], char inputPath[],
 		struct tcInfo biases[], char title[], char description[], struct problemTestcase *result)
 {
 	char error[STRSIZE];
 
-	if(mkdir(resultPath, S_IRWXU|S_IRWXO)<0 && errno != EEXIST){
-		sprintf(error,"mkdir %d ", errno);
+	if(resultPath && mkdir(resultPath, S_IRWXU|S_IRWXO)<0 && errno != EEXIST){
+		sprintf(error,"mkdir %s (errno : %d)", resultPath, errno);
 		goto exception;
 	}
 
-	DIR *inputDir;
-	if((inputDir = opendir(inputPath)) == NULL){
+	DIR *inputDir = opendir(inputPath);
+	if(errno == ENOTDIR && inputDir == NULL){
+		if(strncmp(strrchr(inputPath,'.'),".json",5)){
+			sprintf(error,"wrong inputfile");
+			goto exception;
+		}
+
+		int inputFile;
+		if((inputFile = open(inputPath, O_RDONLY)) < 0){
+			sprintf(error,"open file");
+			goto exception;
+		}
+
+		fprintf(stderr,"converting ");
+		for(int i = 0; i<5; ++i){
+			sleep_ms(10);
+			fprintf(stderr,".");
+		}
+
+		char inputStr[STRSIZE];read(inputFile, inputStr, STRSIZE);
+		if(cnvtTC(inputStr, STRSIZE, result)<0)
+			fprintf(stderr," fail!\n");
+		else
+			fprintf(stderr," done!\n");
+		return 0;
+	}else if(inputDir == NULL){
 		sprintf(error,"opendir");
 		fprintf(stderr,"inputDir : %s \n", inputPath);
 		goto exception;
 	}
 
-	int cnt = 0; // count for testcase
-	srand(time(NULL));
 	struct dirent *dent;
 	while((dent = readdir(inputDir))){
 		if(dent->d_type != DT_REG)
 			continue;
 
 		static int isJson;
-		char filename[BUFSIZE],*extension,inputFilePath[BUFSIZE],resultFilePath[BUFSIZE];
-		strcpy(filename,dent->d_name);extension = getExtension(filename);
+		char filename[BUFSIZE],inputFilePath[BUFSIZE],resultFilePath[BUFSIZE],*extension;
+		strcpy(filename,dent->d_name);extension = strrchr(filename,'.');
 		if(strncmp(extension,".json",5)){
 			isJson = 0;
 			sprintf(inputFilePath,"%s/%s",inputPath,filename);
@@ -110,38 +152,32 @@ int encode(char resultPath[], char inputPath[],
 			sprintf(error,"open file");
 			goto exception;
 		}
+			
+		fprintf(stderr,"converting ");
 
+		for(int i = 0; i<5; ++i){
+			sleep_ms(10);
+			fprintf(stderr,".");
+		}
+
+		if(!isJson && cnvtWrapper(inputFile,resultFilePath,NULL,NULL)<0){
+			sprintf(error,"open file");
+			goto exception;
+		}else if(!isJson)
+			continue;
+		int isInfo;
+		if((isInfo = !strncmp(filename,"info",4)) && cnvtWrapper(inputFile,resultFilePath,title,description)<0){
+			sprintf(error,"open file");
+			goto exception;
+		}else if(isInfo)
+			continue;
+		
 		char inputStr[STRSIZE];
 		read(inputFile, inputStr, STRSIZE);
-			
-		fprintf(stdout,"converting %s to %s...\n",inputFilePath, resultFilePath);
-
-		if(!isJson){
-			int resultFile;
-			if((resultFile = open(resultFilePath, O_WRONLY|O_CREAT|O_TRUNC,S_IRWXO|S_IRWXU)) <0 )
-				goto exception;
-			cnvtNormal(resultFile, inputStr, STRSIZE);
-
-			close(inputFile);
-			close(resultFile);
-			continue;
-		}
-
-		if(!strncmp(filename,"info",4)){
-			int resultFile;
-			if((resultFile = open(resultFilePath, O_WRONLY|O_CREAT|O_TRUNC,S_IRWXO|S_IRWXU)) <0 )
-				goto exception;
-			cnvtInfo(resultFile, inputStr, STRSIZE, title, description);
-
-			close(inputFile);
-			close(resultFile);
-			continue;
-		}
-		
-		static char bias; static int biasIdx = 0;
-		biases[biasIdx].name = strdup(filename);
-		biases[biasIdx].localPath = strdup(resultFilePath);
-		cnvtTC(inputStr, STRSIZE, result);
+		if(cnvtTC(inputStr, STRSIZE, result)<0)
+			fprintf(stderr," fail!\n");
+		else
+			fprintf(stderr," done!\n");
 
 		close(inputFile);
 	}

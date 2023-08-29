@@ -20,7 +20,7 @@ EJP-T is a specialized component of the Edged Judger Platform (EJP) designed to 
 
 1. Clone the EJP-T repository.
     ```bash
-    git clone https://github.com/yourusername/ejp-t.git
+    git clone https://github.com/EdgeCrafters/ejp-t.git
     ```
 2. Navigate to the cloned directory and run the installation script.
     ```bash
@@ -152,19 +152,19 @@ ejp-t workbook [command] [options]
     </br>
 
     ```bash
-    ejp-t workbook delete -r swe2001_42
+    ejp-t workbook delete -r swe2001_42 # delete a whole workbook
     ```
     or
     ```bash
-    ejp-t workbook delete -r swe2001_42 -p assignment_1
+    ejp-t workbook delete -r swe2001_42 -p assignment_1 # delete a problem
     ```
     or
     ```bash
-    ejp-t workbook delete -r swe2001_42 -p assignment_1 -t
+    ejp-t workbook delete -r swe2001_42 -p assignment_1 -t # delete testcases
     ```
 
     </br>
-2. ```append``` : get score of user(s)
+2. ```append``` : append workbook/problem/testcase 
     </br>
     * ```-h``` : url of server (cached)
     * ```-r``` : name of workbook. specifies the workbook to append problem or testcases. (cached)
@@ -173,11 +173,11 @@ ejp-t workbook [command] [options]
     </br>
 
     ```bash
-    ejp-t workbook append -r swe2001_42 -l ./path_of_problem
+    ejp-t workbook append -r swe2001_42 -l ./path_of_problem #append problem to workbook
     ```
     or
     ```bash
-    ejp-t workbook append -p assignment_1 -l ./path_of_testcase.json
+    ejp-t workbook append -p assignment_1 -l ./path_of_testcase.json # append testcase to problem
     ```
     
     </br>

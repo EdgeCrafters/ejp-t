@@ -39,7 +39,7 @@ EJP-T is a specialized component of the Edged Judger Platform (EJP) designed to 
     * [category]: The category to which the command belongs (e.g., manage, workbook).
     * [command]: The specific action you want to perform (e.g., create, append, enroll).
     * [options]: Additional parameters or flags that modify the command. (e.g. -h(host), -l(location)).
-    See [below](#commands) for Further information
+    See [below](#Details) for Further information
 2. Use the menu options to create new assignments, manage grades, or sync with EJP-S and EJP-BE.
 3. For a list of all available commands and options, use:
     ```bash
@@ -52,16 +52,33 @@ We welcome contributions from the community! Feel free to fork the repository, m
 
 ## License 📄
 
-EJP-T is part of the EJP project and follows the same MIT license.
+    EJP-T is part of the EJP project and follows the same MIT license.
 
-## commands
+## Details
 
 ### manage
-you can mange your workbook.
-``` bash
-ejp-t manage [command] [options]
-```
-#### ```bash
-ejp-t manage
-```
+    you can mange workbook(s).
+    ``` bash
+    ejp-t manage [command] [options]
+    ```
+#### commands
+    0. create
+        create user(s) in certain host
+    1. enroll
+        enroll user(s) to workbook
+    2. score
+        get score of user(s)
+    3. list
+        get information of your workbook, problem, or testcases.
+
 ### workbook
+    you manipulate workbook(s).
+    ``` bash
+    ejp-t workbook [command] [options] 
+    ```
+    0. create
+        create workbook in certain host
+    1. append
+        append a problem to workbook or a testcase to problem
+    2. delete
+        delete workbook, problem or testcase

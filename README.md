@@ -65,10 +65,17 @@ ejp-t manage [command] [options]
 
 #### ```[command]```
 0. ```create``` : create user(s) in certain host
-    * ```-h```(host) : url of server
-    * ```-u```(username) : username to create
-    * ```-p```(password) : password of user to create
-    * ```-l```(location) : locatioin of ```.csv```fil which includes usernames and passwords. with this option, ```-u``` and ```-p``` options are optional
+    * ```-h``` : url of server
+    * ```-u``` : username to create
+    * ```-p``` : password of user to create
+    * ```-l``` : locatioin of ```.csv```fil which includes usernames and passwords. with this option, ```-u``` and ```-p``` options are optional
+```bash
+ejp-t manage -h http://your.url.plz -u john1234 -p neo666
+```
+or
+```bash
+ejp-t manage -h http://your.url.plz -l users_info.csv
+```
 1. ```enroll``` : enroll user(s) to workbook
 2. ```score``` : get score of user(s)
 3. ```list``` : get information of your workbook, problem, or testcases.

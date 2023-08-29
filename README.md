@@ -59,9 +59,9 @@ EJP-T is part of the EJP project and follows the same MIT license.
 ### manage
 you can mange workbook(s).
 
-    ``` bash
-    ejp-t manage [command] [options]
-    ```
+``` bash
+ejp-t manage [command] [options]
+```
 
 #### commands
 0. create
@@ -76,9 +76,9 @@ you can mange workbook(s).
 ### workbook
 you manipulate workbook(s).
 
-    ``` bash
-    ejp-t workbook [command] [options] 
-    ```
+``` bash
+ejp-t workbook [command] [options] 
+```
 
 0. create
     create workbook in certain host

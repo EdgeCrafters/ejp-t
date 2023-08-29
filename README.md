@@ -72,6 +72,7 @@ ejp-t manage [command] [options]
     * ```-p``` : password of a user to create
     * ```-l``` : path to `.csv` file with usernames and passwords (makes -u and -p optional)
     </br>
+
     ```bash
     ejp-t manage create -u john1234 -p neo666
     ```
@@ -79,6 +80,7 @@ ejp-t manage [command] [options]
     ```bash
     ejp-t manage create -h http://your.url.plz -l users_info.csv
     ```
+
     </br>
 1. ```enroll``` : enroll user(s) to workbook. with this command, able to assign workbook to students
     </br>
@@ -87,6 +89,7 @@ ejp-t manage [command] [options]
     * ```-r``` : name of workbook to enroll to (cached)
     * ```-l``` : path to .csv file with usernames and workbooks (makes -u and -r optional)
     </br>
+
     ```bash
     ejp-t manage enroll -h http://your.url.plz -u john1234 -r swe2001_41
     ```
@@ -94,6 +97,7 @@ ejp-t manage [command] [options]
     ```bash
     ejp-t manage enroll -l users_repo.csv
     ```
+
     </br>
 2. ```score``` : get score of user(s)
     </br>
@@ -103,6 +107,7 @@ ejp-t manage [command] [options]
     * ```-p``` : name of problem to instpect. without this option, program will generate all scores about problems inside the workbook.
     * ```-l``` : path to store ```[workbook]-[problem].csv```file(e.g. ) which includes score of users. 
     </br>
+
     ```bash
     ejp-t manage score -u john1234 -r swe2001_41 -p binary_tree
     ```
@@ -110,6 +115,7 @@ ejp-t manage [command] [options]
     ```bash
     ejp-t manage score -p kmp_problem -l ./scores
     ```
+    
     </br>
 3. ```list``` : get information of your workbook, problem, or testcases.
     </br>

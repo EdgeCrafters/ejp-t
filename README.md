@@ -2,6 +2,21 @@
 
 EJP-T is a specialized component of the Edged Judger Platform (EJP) designed to empower educators in the realm of coding education. Seamlessly integrated with the EJP ecosystem, EJP-T enables teachers to craft assignments, manage student grades, and even automate the grading process.
 
+## Table of Contents
+- [Highlights 🌟](#highlights-🌟)
+- [Getting Started 📚](#getting-started-📚)
+  - [Prerequisites](#prerequisites)
+  - [Installation](#installation)
+  - [Usage](#usage)
+- [Contributing 🤝](#contributing-🤝)
+- [License 📄](#license-📄)
+- [Details](#details)
+  - [manage](#manage)
+    - [```[command]```](#command)
+  - [workbook](#workbook)
+    - [```[command]```](#command-1)
+
+
 ## Highlights 🌟
 
 - **Craft Assignments**: Create coding assignments with custom criteria, deadlines, and point values.

@@ -55,7 +55,7 @@ We welcome contributions from the community! Feel free to fork the repository, m
 EJP-T is part of the EJP project and follows the same MIT license.
 
 ## Details
-
+* some ```[options]``` and informations for authentication can be cached in local avoiding duplicated typings.
 ### manage
 you can mange workbook(s).
 
@@ -65,20 +65,44 @@ ejp-t manage [command] [options]
 
 #### ```[command]```
 0. ```create``` : create user(s) in certain host
-    * ```-h``` : url of server
-    * ```-u``` : username to create
-    * ```-p``` : password of user to create
-    * ```-l``` : locatioin of ```.csv```fil which includes usernames and passwords. with this option, ```-u``` and ```-p``` options are optional
-```bash
-ejp-t manage -h http://your.url.plz -u john1234 -p neo666
-```
-or
-```bash
-ejp-t manage -h http://your.url.plz -l users_info.csv
-```
-1. ```enroll``` : enroll user(s) to workbook
+    * ```-h``` : url of server (cached)
+    * ```-u``` : a username to create
+    * ```-p``` : password of a user to create
+    * ```-l``` : locatioin of ```.csv```file(e.g. ) which includes usernames and passwords. with this option, don't need to set ```-u``` and ```-p``` options
+    ```bash
+    ejp-t manage create -u john1234 -p neo666
+    ```
+    or
+    ```bash
+    ejp-t manage create -h http://your.url.plz -l users_info.csv
+    ```
+1. ```enroll``` : enroll user(s) to workbook. with this command, able to assign workbook to students
+    * ```-h``` : url of server (cached)
+    * ```-u``` : name of a user to enroll
+    * ```-r``` : name of workbook to enroll to (cached)
+    * ```-l``` : locatioin of ```.csv```file(e.g. ) which includes usernames and workbooknames. with this option, don't need to set ```-u``` and ```-r``` options
+    ```bash
+    ejp-t manage enroll -h http://your.url.plz -u john1234 -r swe2001_41
+    ```
+    or
+    ```bash
+    ejp-t manage enroll -l users_repo.csv
+    ```
 2. ```score``` : get score of user(s)
+    * ```-h``` : url of server (cached)
+    * ```-u``` : name of a user to inspect. with this option, program will neglact the ```-l``` option and print the score right to the stdout.
+    * ```-r``` : name of workbook to inspect (cached)
+    * ```-p``` : name of problem to instpect. without this option, program will generate all scores about problems inside the workbook.
+    * ```-l``` : locatioin to store ```[workbook]-[problem].csv```file(e.g. ) which includes score of users. 
+    ```bash
+    ejp-t manage score -u john1234 -r swe2001_41 -p binary_tree
+    ```
+    or
+    ```bash
+    ejp-t manage score -p kmp_problem -l ./scores
+    ```
 3. ```list``` : get information of your workbook, problem, or testcases.
+    * TBD.
 
 ### workbook
 you manipulate workbook(s).

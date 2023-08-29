@@ -33,13 +33,18 @@ EJP-T is a specialized component of the Edged Judger Platform (EJP) designed to 
 
 1. Launch EJP-T from the command line:
     ```bash
-    ejp-t
+    ejp-t [category] [command] [options] 
     ```
+    Parameters
+    * [category]: The category to which the command belongs (e.g., manage, workbook).
+    * [command]: The specific action you want to perform (e.g., create, append, enroll).
+    * [options]: Additional parameters or flags that modify the command. (e.g. -h(host), -l(location)).
+    See [below](#commands) for Further information
 2. Use the menu options to create new assignments, manage grades, or sync with EJP-S and EJP-BE.
-
-## Documentation 📖
-
-For more advanced features and API references, please refer to our [official documentation](#).
+3. For a list of all available commands and options, use:
+    ```bash
+    ejp-t help
+    ```
 
 ## Contributing 🤝
 
@@ -48,3 +53,15 @@ We welcome contributions from the community! Feel free to fork the repository, m
 ## License 📄
 
 EJP-T is part of the EJP project and follows the same MIT license.
+
+## commands
+
+### manage
+you can mange your workbook.
+``` bash
+ejp-t manage [command] [options]
+```
+#### ```bash
+ejp-t manage
+```
+### workbook

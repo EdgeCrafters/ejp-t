@@ -67,7 +67,7 @@ ejp-t manage [command] [options]
 #### ```[command]```
 0. ```create``` : create user(s) in certain host
     </br>
-    * ```-h``` : url of server (cached)
+    * ```-h``` : url of server, the url of the server where the workbook, problem, or test cases are stored. this information can be cached locally for future use.
     * ```-u``` : a username to create
     * ```-p``` : password of a user to create
     * ```-l``` : path to `.csv` file with usernames and passwords (makes -u and -p optional)
@@ -122,13 +122,62 @@ ejp-t manage [command] [options]
     * TBD.
 
 ### workbook
-you manipulate workbook(s).
+you can manipulate workbook(s).
 
 ``` bash
 ejp-t workbook [command] [options] 
 ```
+</br>
 
 #### ```[command]```
-0. ```create``` : create workbook in certain host
-1. ```append``` : append a problem to workbook or a testcase to problem
-2. ```delete``` : delete workbook, problem or testcase
+0. ```create``` : create a new workbook in certain host
+    </br>
+    * ```-h``` : url of server (cached)
+    * ```-l``` : path of workbook directory which possess compenents like `info.json` and problems
+    * ```-r``` : name of workbook
+    </br>
+
+    ```bash
+    ejp-t workbook create -h http:/your.url.plz -l ./workbook0 -r swe2001_43
+    ```
+
+    </br>
+1. ```delete``` : delete workbook/problem/testcase 
+    </br>
+    * `-h`: url of server (cached)
+    * `-r`: name of workbook. specifies the workbook to delete or the workbook that contains the problem or test cases you want to delete.
+    * `-p`: name of problem. specifies the problem to delete or the problem that contains the test cases you want to delete.
+    * `-t`: testcase flag. use this flag to indicate that you want to delete test cases. no additional value is needed for this option; its presence is enough to signal the deletion of test cases.
+
+    </br>
+
+    ```bash
+    ejp-t workbook delete -r swe2001_42
+    ```
+    or
+    ```bash
+    ejp-t workbook delete -r swe2001_42 -p assignment_1
+    ```
+    or
+    ```bash
+    ejp-t workbook delete -r swe2001_42 -p assignment_1 -t
+    ```
+
+    </br>
+2. ```append``` : get score of user(s)
+    </br>
+    * ```-h``` : url of server (cached)
+    * ```-r``` : name of workbook. specifies the workbook to append problem or testcases. (cached)
+    * ```-p``` : name of problem. specifies the problem to append testcases.
+    * ```-l``` : path of problem directory or testcases file.
+    </br>
+
+    ```bash
+    ejp-t workbook append -r swe2001_42 -l ./path_of_problem
+    ```
+    or
+    ```bash
+    ejp-t workbook append -p assignment_1 -l ./path_of_testcase.json
+    ```
+    
+    </br>

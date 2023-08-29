@@ -58,9 +58,11 @@ We welcome contributions from the community! Feel free to fork the repository, m
 
 ### manage
     you can mange workbook(s).
+
     ``` bash
     ejp-t manage [command] [options]
     ```
+    
 #### commands
     0. create
         create user(s) in certain host
@@ -73,9 +75,11 @@ We welcome contributions from the community! Feel free to fork the repository, m
 
 ### workbook
     you manipulate workbook(s).
+
     ``` bash
     ejp-t workbook [command] [options] 
     ```
+
     0. create
         create workbook in certain host
     1. append

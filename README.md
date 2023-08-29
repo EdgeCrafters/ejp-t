@@ -64,14 +64,10 @@ ejp-t manage [command] [options]
 ```
 
 #### commands
-0. create
-    create user(s) in certain host
-1. enroll
-    enroll user(s) to workbook
-2. score
-    get score of user(s)
-3. list
-    get information of your workbook, problem, or testcases.
+0. ```create``` : create user(s) in certain host
+1. ```enroll``` : enroll user(s) to workbook
+2. ```score``` : get score of user(s)
+3. ```list``` : get information of your workbook, problem, or testcases.
 
 ### workbook
 you manipulate workbook(s).
@@ -80,9 +76,6 @@ you manipulate workbook(s).
 ejp-t workbook [command] [options] 
 ```
 
-0. create
-    create workbook in certain host
-1. append
-    append a problem to workbook or a testcase to problem
-2. delete
-    delete workbook, problem or testcase
+0. ```create``` : create workbook in certain host
+1. ```append``` : append a problem to workbook or a testcase to problem
+2. ```delete``` : delete workbook, problem or testcase

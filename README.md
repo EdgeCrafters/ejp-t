@@ -40,7 +40,9 @@ EJP-T is a specialized component of the Edged Judger Platform (EJP) designed to 
 2. Navigate to the cloned directory and run the installation script.
     ```bash
     cd ejp-t
-    ./install.sh
+    sudo apt update -y && sudo apt install -y git git cmake gcc g++ pkg-config libkrb5-dev libssl-dev python3
+    cmake -E make_directory build && cd build
+    cmake .. && make
     ```
 3. Follow the on-screen prompts to complete the installation.
 

@@ -1,42 +1,106 @@
 #include "common.h" 
 #include "http.h"
 
-int printInfo(const char path[])
-{
-    struct info info;
-    getInfoByPath(path,&info);
-
-    fprintf(stderr,"title : %s\n",info.title);
-    fprintf(stderr,"description : %s\n\n",info.description);
-
-    return 0;
-
-exception:
-    return -1;
-}
-
-int listInfo(int argc, char*argv[])
+int updateInfo(const char home[])
 {
     char error[ERRORISZE];
     char path[PATHSIZE]; sprintf(path,"%s",repos);
-    for(int i = 0; i < argc; ++i)
-        sprintf(path,"%s/%s",path,argv[i]);
 
-    DIR *dir;
-    if((dir = opendir(path)) == NULL){
-        fprintf(stderr,"opendir ");
+    cJSON *response = NULL, *content = NULL;
+    if(getAllReposHTTP(home,&response)<0 || !response || !(content = cJSON_GetObjectItem(response,"content"))){
+        fprintf(stderr,"fail to get repo info in http connection ...");
         return -1;
     }
 
-    fprintf(stderr,"\n=========================================\n");
-    for(struct dirent *dent = readdir(dir); dent; dent = readdir(dir)){
-        char target[PATHSIZE];
-        sprintf(target,"%s/%s",path,dent->d_name);
-        if(dent->d_type == DT_DIR && strncmp(dent->d_name,"..",2) &&
-            strcat(target,"/info.json") && !printInfo(target))
-            ;
+    int repoNum = cJSON_GetArraySize(content);
+    for(int i = 0; i<repoNum; ++i){
+        cJSON *repo = cJSON_GetArrayItem(content,i);
+        struct info repoInfo;
+        if (!repo)
+            continue;
+
+        cJSON *repoId = cJSON_GetObjectItem(repo,"repoId");
+        cJSON *repoName = cJSON_GetObjectItem(repo,"repoName");
+        if(!repoId || !repoName){
+            fprintf(stderr,"faile to get repo info ...");
+            return -1;
+        }
+
+        char id[IDSIZE]; sprintf(id,"%d",repoId->valueint);repoInfo.id = id;
+        char name[VALUESIZE]; sprintf(name,"%s",repoName->valuestring);repoInfo.title = name;
+        char path[PATHSIZE]; sprintf(path,"%s/%s/%s",repos,home,repoInfo.title);
+        mkdir(path, S_IRWXU|S_IRWXO);setInfo(home,repoInfo.title,NULL,&repoInfo);
+
+        cJSON *problems = NULL;
+        if(getReposHTTP(home,repoInfo.id,&problems)<0 || !problems || !(problems = cJSON_GetObjectItem(problems,"Problem")))
+            continue;
+        
+        cJSON *problem = NULL;
+        int problemNum = cJSON_GetArraySize(problems);
+        for(int i = 0; i<problemNum; ++i){
+            cJSON *problem = cJSON_GetArrayItem(problems,i);
+            if(!problem)
+                continue;
+            char id[IDSIZE]; sprintf(id,"%d",cJSON_GetObjectItem(problem,"id")->valueint);
+            char title[VALUESIZE]; sprintf(title,"%s",cJSON_GetObjectItem(problem,"title")->valuestring);
+            char description[STRSIZE]; sprintf(description,"%s",cJSON_GetObjectItem(problem,"text")->valuestring);
+            struct info problemInfo = {.id = id, .title = title, .description = description};
+            char path[PATHSIZE]; sprintf(path,"%s/%s/%s/%s",repos,home,repoInfo.title,problemInfo.title);
+            mkdir(path, S_IRWXU|S_IRWXO);setInfo(home,repoInfo.title,problemInfo.title,&problemInfo);
+        }
     }
-    fprintf(stderr,"=========================================\n");
+
+    return 0;
+}
+
+int listRepos(const char home[])
+{
+    if(updateInfo(home)<0){
+        fprintf(stderr,"fail to update informations ...");
+        return -1;
+    }
+
+    fprintf(stderr, "Workbook List:\n");
+    fprintf(stderr, "%-10s | %-30s \n", "ID", "Workbook Title");
+    char path[PATHSIZE]; sprintf(path,"%s/%s",repos,home);
+    DIR *dir = opendir(path);
+    struct dirent *dent;
+    while((dent = readdir(dir))){
+        if(dent->d_type != DT_DIR || dent->d_name[0] == '.')
+            continue;
+        
+        struct info repoInfo;
+        if(getInfo(home,dent->d_name,NULL,&repoInfo)<0)
+            continue;
+        
+        fprintf(stderr, "%-10s | %-30s \n", repoInfo.id, repoInfo.title);
+    }
+
+    return 0;
+}
+
+int listProblems(const char home[],const char repoName[])
+{
+    if(updateInfo(home)<0){
+        fprintf(stderr,"fail to update informations ...");
+        return -1;
+    }
+
+    fprintf(stderr, "Problem List:\n");
+    fprintf(stderr, "%-10s | %-30s | %s\n", "ID", "Problem Title","Description");
+    char path[PATHSIZE]; sprintf(path,"%s/%s/%s",repos,home,repoName);
+    DIR *dir = opendir(path);
+    struct dirent *dent;
+    while((dent = readdir(dir))){
+        if(dent->d_type != DT_DIR || dent->d_name[0] == '.')
+            continue;
+        
+        struct info problemInfo;
+        if(getInfo(home,repoName,dent->d_name,&problemInfo)<0)
+            continue;
+        
+        fprintf(stderr, "%-10s | %-30s | %s\n", problemInfo.id, problemInfo.title, problemInfo.description);
+    }
 
     return 0;
 }

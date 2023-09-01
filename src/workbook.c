@@ -13,15 +13,17 @@ static int delete(int argc, char *argv[])
 	char home[VALUESIZE]={0},problemName[VALUESIZE] = {0},repoName[VALUESIZE] = {0},testcaseName[VALUESIZE] = {0};
 	char *values[] = {home,problemName,repoName,testcaseName};
 	char *cache[] = {homeCache,NULL,repoCache,NULL};
+	char flags[4] = {0};
 	
 	fprintf(stderr,"delete : ");
-	int opts = parseOpt(argc,argv,"h:p:r:t:",4,values,cache);
+	int opts = parseOpt(argc,argv,"h:p:r:t:",4,values,cache,flags);
+	fprintf(stderr,"h %d p %d r %d t %d \n",flags[0],flags[1],flags[2],flags[3]);
 	if(opts<2){
 		fprintf(stderr,"Missing opts...\n");
 		exit(EXIT_FAILURE);
-	}else if(opts == 4)
+	}else if(flags[3])
 		deleteTestcases(home,repoName,problemName);
-	else if(problemName[0] && repoName[0])
+	else if(flags[1] && repoName[0])
 		deleteProblem(home, repoName, problemName);
 	else if(repoName[0])
 		deleteRepo(home, repoName);
@@ -39,9 +41,10 @@ static int append(int argc, char*argv[])
 	char home[VALUESIZE]={0},location[VALUESIZE]={0},repoName[VALUESIZE]={0},problemName[VALUESIZE]={0};
 	char *values[] = {home,location,repoName,problemName};
 	char *cache[] = {homeCache, locationCache, repoCache, NULL};
+	char flags[4] = {0};
 	
 	fprintf(stderr,"append : ");
-	int opts = parseOpt(argc,argv,"h:l:r:p:",4,values,cache);
+	int opts = parseOpt(argc,argv,"h:l:r:p:",4,values,cache,flags);
 	if(opts<3){
 		fprintf(stderr,"Missing opts...\n");
 		exit(EXIT_FAILURE);
@@ -69,7 +72,9 @@ static int create(int argc, char*argv[])
 	char home[VALUESIZE] , location[VALUESIZE], repoName[VALUESIZE];
 	char *values[] = {home,location,repoName};
 	char *cache[] = {homeCache, locationCache, repoCache};
-	if(parseOpt(argc,argv,"h:l:r:",3,values,cache)<3){
+	char flags[4] = {0};
+
+	if(parseOpt(argc,argv,"h:l:r:",3,values,cache,flags)<3){
 		fprintf(stderr,"Missing opts...\n");
 		exit(EXIT_FAILURE);
 	}

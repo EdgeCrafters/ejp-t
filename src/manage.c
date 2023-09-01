@@ -1,6 +1,7 @@
 #include "common.h" 
 
-int listInfo(int argc, char*argv[]);
+int listRepos(const char home[]);
+int listProblems(const char home[],const char repoName[]);
 int createUser(const char home[], const char username[], const char password[]);
 int createUsers(const char home[], const char location[]);
 int enrollUser(const char home[], const char username[], const char repoName[]);
@@ -13,16 +14,22 @@ int repoScore(const char home[],const char repoName[], const char location[]);
 static int list(int argc, char*argv[])
 {
     char error[ERRORISZE];
-    char home[VALUESIZE], problemName[VALUESIZE], repoName[VALUESIZE];
-    char *values[] = {home, repoName, problemName,NULL};
-    char *cache[] = {homeCache, NULL, NULL};
+    char home[VALUESIZE], repoName[VALUESIZE];
+    char *values[] = {home, repoName};
+    char *cache[] = {homeCache, NULL};
+    char flags[2] = {0};
 
     fprintf(stderr,"list : ");
 
-    int opts = parseOpt(argc,argv,"h:r:p:",3,values,cache);
+    int opts = parseOpt(argc,argv,"h:r:",2,values,cache,flags);
+
     switch(opts){
-        case 3: case 2: case 1: case 0:
-            listInfo(opts,values);
+        case 1:
+            listRepos(home);
+            break;
+
+        case 2:
+            listProblems(home,repoName);
             break;
 
         default:
@@ -44,9 +51,10 @@ static int score(int argc, char*argv[])
     char home[VALUESIZE]={0},userName[VALUESIZE]={0},repoName[VALUESIZE]={0},problemName[VALUESIZE]={0},location[PATHSIZE]={0};
     char *values[] = {home, userName, repoName,problemName,location};
     char *cache[] = {homeCache,NULL,repoCache,NULL,locationCache};
+    char flags[5] = {0};
 
     fprintf(stderr,"score : ");
-    int opts = parseOpt(argc,argv,"h:u:r:p:l:",5,values,cache);
+    int opts = parseOpt(argc,argv,"h:u:r:p:l:",5,values,cache,flags);
     if(!home[0] || !repoName[0]){
         sprintf(error,"missing opts");
         goto exception;
@@ -79,9 +87,10 @@ static int enroll(int argc, char*argv[])
     char home[VALUESIZE]={0},username[VALUESIZE]={0},repoName[VALUESIZE]={0},location[PATHSIZE]={0};
     char *values[] = {home, username, repoName,location};
     char *cache[] = {homeCache, NULL, repoCache,NULL};
+    char flags[4] = {0};
 
     fprintf(stderr,"enroll : ");
-    int opts = parseOpt(argc,argv,"h:u:r:l:",4,values,cache);
+    int opts = parseOpt(argc,argv,"h:u:r:l:",4,values,cache,flags);
     if(!home[0]){
         sprintf(error,"missing home");
         goto exception;
@@ -116,9 +125,10 @@ static int create(int argc, char*argv[])
     char home[VALUESIZE]={0},username[VALUESIZE]={0},password[VALUESIZE]={0},location[PATHSIZE]={0};
     char *values[] = {home, username, password,location};
     char *cache[] = {homeCache, NULL, NULL,NULL};
+    char flags[4] = {0};
 
     fprintf(stderr,"create : ");
-    int opts = parseOpt(argc,argv,"h:u:p:l:",4,values,cache);
+    int opts = parseOpt(argc,argv,"h:u:p:l:",4,values,cache,flags);
     if(!home[0]){
         sprintf(error,"missing home");
         goto exception;

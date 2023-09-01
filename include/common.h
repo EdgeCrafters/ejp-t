@@ -27,7 +27,7 @@
 
 #define CMDSIZE 512
 #define URLSIZE 512
-#define PATHSIZE 512
+#define PATHSIZE 1024
 
 #define VALUESIZE 32
 #define ERRORISZE 1024
@@ -74,7 +74,7 @@ extern char cookie[PATHSIZE];
 extern char repos[PATHSIZE];
 extern char archives[PATHSIZE];
 
-int parseOpt(int argc, char *argv[], const char targetOpt[], const int optNum, char *optArg[], char *caches[]);
+int parseOpt(int argc, char *argv[], const char targetOpt[], const int optNum, char *optArg[], char *caches[], char flags[]);
 void userLogin(const char home[]);
 void userLogout(const char home[]);
 char *getExtension(char *target);

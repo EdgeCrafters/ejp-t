@@ -1,10 +1,10 @@
 #include "common.h"
 
 int parseOpt(int argc, char *argv[], const char targetOpt[], const int optNum,
-             char *optArg[], char *caches[])
+             char *optArg[], char *caches[], char flags[])
 {
     int c, result = 0;
-    int flags[MAXOPT] = {0};
+    // int flags[MAXOPT] = {0};
 
     while ((c = getopt(argc, argv, targetOpt)) != -1)
         for (int i = 0; i < optNum; ++i)

@@ -99,21 +99,58 @@ int deleteProblem(char home[], char repoName[], char problemName[])
 {
     char error[STRSIZE];
 
-    struct info problemInfo;
-    if (getInfo(home, repoName, problemName, &problemInfo) < 0)
+    struct info repoInfo;
+    if (getInfo(home, repoName, NULL, &repoInfo) < 0)
     {
-        sprintf(error, "problemInfo");
+        sprintf(error, "repoInfo");
         goto exception;
     }
 
-    if( remove_directory(problemInfo.localPath) < 0)
-        fprintf(stderr,"Fail to remove problem in local ... remove it manually (path : %s)",problemInfo.localPath);
+    struct info problemInfo;
+    if (!problemName[0] || getInfo(home, repoName, problemName, &problemInfo) < 0)
+    {
+        cJSON *response = NULL;
+        if(getReposHTTP(home,repoInfo.id, &response)<0 || !response){
+            fprintf(stderr,"fail to get repo info...");
+            return -1;
+        }
 
-    if (deleteProblemHTTP(home, problemInfo.id) < 0)
+        cJSON *problemArray = cJSON_GetObjectItem(response,"Problem");
+        if(!problemArray){
+            fprintf(stderr,"fail to get problem array...");
+            return -1;
+        }else if(cJSON_GetArraySize(problemArray) < 1){
+            fprintf(stderr,"no such problem...");
+        }
+        fprintf(stderr, "problem List:\n");
+        fprintf(stderr, "%-10s | %-30s | %s\n", "ID", "Title", "Description");
+
+        cJSON *problem;
+        int tcsize = cJSON_GetArraySize(problemArray), i = 0;
+        for(problem = cJSON_GetArrayItem(problemArray, i); 
+            problem; 
+            problem = cJSON_GetArrayItem(problemArray, ++i)) {
+
+            int id = cJSON_GetObjectItem(problem, "id")->valueint;
+            char title[VALUESIZE] = {0}, description[VALUESIZE] = {0};
+            strncpy(title, cJSON_GetObjectItem(problem, "title")->valuestring, VALUESIZE - 1);
+            strncpy(description, cJSON_GetObjectItem(problem, "text")->valuestring, VALUESIZE - 1);
+
+            fprintf(stderr, "%-10d | %-30s | %s\n", id, title, description);
+        }
+
+        fprintf(stderr,"Enter problems' id to delete (seperate with space, press enter) : ");
+        do{
+            int _id;scanf("%d",&_id);
+            char id[IDSIZE]; sprintf(id,"%d",_id);
+            deleteProblemHTTP(home,id);
+        } while(getchar()!='\n');
+    }else if (deleteProblemHTTP(home, problemInfo.id) < 0)
     {
         fprintf(stderr, "Fail to delete problem %s ...\n", problemInfo.title);
         exit(EXIT_FAILURE);
-    }
+    }else if( remove_directory(problemInfo.localPath) < 0)
+        fprintf(stderr,"Fail to remove problem in local ... remove it manually (path : %s)",problemInfo.localPath);
 
     return 0;
 
@@ -224,7 +261,6 @@ exception:
     fprintf(stderr, "%s error...\n", error);
     exit(EXIT_FAILURE);
 }
-
 
 int makeTestcase(char home[], char repoName[], char problemName[], char testcase[])
 {

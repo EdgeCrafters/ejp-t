@@ -35,14 +35,14 @@ make
 
 # Add EJP-T as an environment variable
 if [[ $SHELL == *"bash"* ]]; then
-  echo "export PATH=PATH:$(pwd)/src" >> ~/.bashrc
-  source ~/.bashrc
+  echo "export PATH=\$PATH:$(pwd)/src" >> ~/.bashrc
 elif [[ $SHELL == *"zsh"* ]]; then
-  echo "export EJP_T=PATH:$(pwd)/src" >> ~/.zshrc
-  source ~/.zshrc
+  echo "export PATH=\$PATH:$(pwd)/src" >> ~/.zshrc
 else
   echo "Unsupported shell. Please add manually."
 fi
+
+# source ~/.bashrc && source ~/.zshrc
 
 echo "Installation completed successfully."
 

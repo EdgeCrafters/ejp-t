@@ -7,7 +7,7 @@ set -e
 sudo apt update
 
 # Install prerequisites
-sudo apt install -y git cmake build-essential
+sudo apt install -y git cmake g++ pkg-config libkrb5-dev libssl-dev python3
 
 # # Clone the repository
 # git clone https://github.com/EdgeCrafters/ejp-t.git
@@ -32,11 +32,17 @@ make
 # Create a symlink to the application in /usr/local/bin
 # This will make it easier to run the application from anywhere.
 # Replace "path_to_your_executable" with the actual path.
-sudo ln -s "$(pwd)/path_to_your_executable" /usr/local/bin/ejp-t
 
 # Add EJP-T as an environment variable
-echo 'export EJP_T="/usr/local/bin/ejp-t"' >> ~/.bashrc
-source ~/.bashrc
+if [[ $SHELL == *"bash"* ]]; then
+  echo "export PATH=PATH:$(pwd)/src" >> ~/.bashrc
+  source ~/.bashrc
+elif [[ $SHELL == *"zsh"* ]]; then
+  echo "export EJP_T=PATH:$(pwd)/src" >> ~/.zshrc
+  source ~/.zshrc
+else
+  echo "Unsupported shell. Please add manually."
+fi
 
 echo "Installation completed successfully."
 

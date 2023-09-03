@@ -52,13 +52,13 @@ int setCaches(void)
 		workbookInfo();
 		exit(-1);
 	}else{
-		sprintf(homeCache,"%s/../.ejs/cache/home.txt",exe);		
-        sprintf(repoCache,"%s/../.ejs/cache/repo.txt",exe);
-		sprintf(problemCache,"%s/../.ejs/cache/problem.txt",exe);
-		sprintf(locationCache,"%s/../.ejs/cache/location.txt",exe);
-		sprintf(cookie,"%s/../.ejs/cache/cookie.txt",exe);
-		sprintf(repos,"%s/../.ejs/repos",exe);
-        sprintf(archives,"%s/../.ejs/archives",exe);
+		sprintf(homeCache,"%s/../.ejp/cache/home.txt",exe);		
+        sprintf(repoCache,"%s/../.ejp/cache/repo.txt",exe);
+		sprintf(problemCache,"%s/../.ejp/cache/problem.txt",exe);
+		sprintf(locationCache,"%s/../.ejp/cache/location.txt",exe);
+		sprintf(cookie,"%s/../.ejp/cache/cookie.txt",exe);
+		sprintf(repos,"%s/../.ejp/repos",exe);
+        sprintf(archives,"%s/../.ejp/archives",exe);
 	}
 
     return 0;

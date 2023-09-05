@@ -134,9 +134,21 @@ ejp-t manage [command] [options]
     ```
     
     </br>
-3. ```list``` : get information of your workbook, problem, or testcases.
+3. ```list``` : get score of user(s)
     </br>
-    * TBD.
+    * ```-h``` : url of server (cached)
+    * ```-r``` : name of workbook to inspect
+    </br>
+
+    ```bash
+    ejp-t manage list
+    ```
+    or
+    ```bash
+    ejp-t manage score -r genesisworkbook
+    ```
+    
+    </br>
 
 ### workbook
 you can manipulate workbook(s).

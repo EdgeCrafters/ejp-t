@@ -162,7 +162,7 @@ ejp-t workbook [command] [options]
 0. ```create``` : create a new workbook in certain host
     </br>
     * ```-h``` : url of server (cached)
-    * ```-l``` : path of workbook directory which possess compenents like `info.json` and problems
+    * ```-l``` : path of workbook directory([e.g.](./workbook0)) which possess compenents like `info.json` and problems
     * ```-r``` : name of workbook
     </br>
 

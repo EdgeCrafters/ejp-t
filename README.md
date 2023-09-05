@@ -87,7 +87,7 @@ ejp-t manage [command] [options]
     * ```-h``` : url of server, the url of the server where the workbook, problem, or test cases are stored. this information can be cached locally for future use.
     * ```-u``` : a username to create
     * ```-p``` : password of a user to create
-    * ```-l``` : path to `.csv` file with usernames and passwords (makes -u and -p optional)
+    * ```-l``` : path to `.csv` file([e.g.](./users_info.csv))  with usernames and passwords (makes -u and -p optional)
     </br>
 
     ```bash

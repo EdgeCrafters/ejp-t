@@ -104,7 +104,7 @@ ejp-t manage [command] [options]
     * ```-h``` : url of server (cached)
     * ```-u``` : name of a user to enroll
     * ```-r``` : name of workbook to enroll to (cached)
-    * ```-l``` : path to .csv file with usernames and workbooks (makes -u and -r optional)
+    * ```-l``` : path to .csv file([e.g.](./users-repo.csv)) with usernames and workbooks (makes -u and -r optional)
     </br>
 
     ```bash

@@ -134,18 +134,18 @@ ejp-t manage [command] [options]
     ```
     
     </br>
-3. ```list``` : get score of user(s)
+3. ```list``` : get information of workbooks or problems
     </br>
     * ```-h``` : url of server (cached)
-    * ```-r``` : name of workbook to inspect
+    * ```-r``` : name of workbook to inspect. without this option, program will list workbook which available to user in the host.
     </br>
 
     ```bash
-    ejp-t manage list
+    ejp-t manage list # list workbooks
     ```
     or
     ```bash
-    ejp-t manage score -r genesisworkbook
+    ejp-t manage score -r genesisworkbook # list problems of genesisworkbook
     ```
     
     </br>
